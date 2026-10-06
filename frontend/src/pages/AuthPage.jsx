@@ -11,51 +11,47 @@ import {
   Typography,
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import logo from '../assets/figma/twm-logo.svg';
+import authLockLogo from '../assets/figma/auth-lock-correct.png';
 
 const COLORS = {
-  ink: '#0B0829',
-  lavender: '#8FA0D8',
-  orange: '#FF8400',
-  cream: '#F9DFC6',
-  white: '#FFFDFC',
+  ink: '#0B0829', lavender: '#8FA0D8', orange: '#FF8400', cream: '#F9DFC6',
+  paper: '#FFFAF5', border: '#EADFD5', muted: '#6F6B78',
 };
 
-const loginInitial = { email: '', password: '', remember: true };
-const registerInitial = { name: '', email: '', phone: '', password: '', acceptTerms: false };
+const loginInitial = { email: '', password: '', remember: true, showPassword: false };
+const registerInitial = { name: '', phone: '', email: '', password: '', confirmPassword: '', acceptTerms: false, showPassword: false, showConfirmPassword: false };
+const gmailPattern = /^[^\s@]+@gmail\.com$/i;
+const gmailErrorMessage = 'Ingresa un correo válido que termine en @gmail.com.';
 
-function BrandMark() {
+function AuthTopBar() {
   return (
-    <Stack direction="row" spacing={1.2} alignItems="center">
-      <Box aria-label="Logo TWM" sx={{ width: 48, height: 48, position: 'relative', flexShrink: 0 }}>
-        <Box sx={{ position: 'absolute', left: 10, top: 2, width: 23, height: 23, border: `4px solid ${COLORS.ink}`, borderBottom: 0, borderRadius: '14px 14px 0 0' }} />
-        <Box sx={{ position: 'absolute', left: 5, top: 18, width: 33, height: 23, bgcolor: COLORS.orange, borderRadius: '2px 2px 0 0' }} />
-        <Box sx={{ position: 'absolute', left: 21, top: 25, width: 21, height: 21, bgcolor: COLORS.lavender, border: `4px solid ${COLORS.white}`, borderRadius: '50%' }} />
-      </Box>
-      <Typography sx={{ color: COLORS.ink, fontWeight: 900, fontSize: 24, letterSpacing: '-0.04em' }}>TWM</Typography>
-    </Stack>
+    <Box component="header" sx={{ height: 72, px: { xs: 2, md: 6 }, display: 'flex', alignItems: 'center', bgcolor: COLORS.paper }}>
+      <Box component="img" src={logo} alt="TWM" sx={{ width: 62, height: 62, objectFit: 'contain', flexShrink: 0 }} />
+    </Box>
   );
 }
 
-function DecorativePanel() {
+function LockArtwork({ register = false }) {
   return (
-    <Box sx={{ display: { xs: 'none', md: 'block' }, position: 'relative', overflow: 'hidden', bgcolor: COLORS.ink, minHeight: 0 }}>
-      <Box sx={{ position: 'absolute', top: 32, left: 34, width: 142, height: 112, bgcolor: COLORS.lavender, borderRadius: '32px' }} />
-      <Box sx={{ position: 'absolute', top: 150, right: 52, width: 214, height: 180, bgcolor: COLORS.orange, borderRadius: '34px' }} />
-      <Box sx={{ position: 'absolute', left: 46, right: 46, bottom: 30, height: 280, bgcolor: COLORS.cream, borderRadius: '30px' }}>
-        <Box sx={{ position: 'absolute', left: '50%', top: 42, transform: 'translateX(-50%)', width: 134, height: 92, border: `20px solid ${COLORS.ink}`, borderBottom: 0, borderRadius: '90px 90px 0 0' }} />
-        <Box sx={{ position: 'absolute', left: 64, bottom: 40, width: 105, height: 120, bgcolor: COLORS.orange, borderRadius: '0 58px 0 0' }} />
-        <Box sx={{ position: 'absolute', right: 64, bottom: 40, width: 105, height: 120, bgcolor: COLORS.lavender, borderRadius: '58px 0 0 0' }} />
-        <Box sx={{ position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)', width: 102, height: 76, border: `20px solid ${COLORS.cream}`, borderBottom: 0, borderRadius: '70px 70px 0 0' }} />
-      </Box>
+    <Box sx={{ position: 'relative', height: '100%', minHeight: 480, overflow: 'hidden', bgcolor: register ? COLORS.ink : COLORS.lavender }}>
+      <Box sx={{ position: 'absolute', top: register ? 40 : 36, left: register ? 44 : 104, width: register ? 182 : 180, height: register ? 140 : 180, borderRadius: register ? '30px' : '36px', bgcolor: register ? COLORS.lavender : COLORS.orange }} />
+      <Box sx={{ position: 'absolute', top: register ? 192 : 151, right: register ? 72 : 39, width: register ? 274 : 250, height: register ? 230 : 250, borderRadius: register ? '42px' : '48px', bgcolor: register ? COLORS.orange : COLORS.ink }} />
+      <Box component="img" src={authLockLogo} alt="Logo TWM" sx={{ position: 'absolute', left: '50%', bottom: 24, transform: 'translateX(-50%)', width: register ? '78%' : '68%', maxWidth: 466, height: 'auto', display: 'block' }} />
     </Box>
   );
+}
+
+function Field({ name, label, value, onChange, type = 'text', placeholder, required = true, endAdornment, error = false, helperText }) {
+  return <TextField name={name} label={label} placeholder={placeholder} type={type} value={value} onChange={onChange} required={required} error={error} helperText={helperText} fullWidth slotProps={{ input: { endAdornment } }} />;
 }
 
 function AuthPage({ onLogin }) {
   const [mode, setMode] = useState('login');
   const [loginData, setLoginData] = useState(loginInitial);
   const [registerData, setRegisterData] = useState(registerInitial);
+  const [loginEmailError, setLoginEmailError] = useState(false);
+  const [registerEmailError, setRegisterEmailError] = useState(false);
   const isLogin = mode === 'login';
 
   const updateData = (setter) => (event) => {
@@ -65,72 +61,84 @@ function AuthPage({ onLogin }) {
 
   const submitLogin = (event) => {
     event.preventDefault();
-    console.log('Datos de inicio de sesion', loginData);
+    if (!gmailPattern.test(loginData.email.trim())) {
+      setLoginEmailError(true);
+      return;
+    }
+    console.log('[TWM] Datos de inicio de sesion', { ...loginData });
     onLogin();
   };
 
   const submitRegister = (event) => {
     event.preventDefault();
-    console.log('Datos de registro de usuario', registerData);
+    if (!gmailPattern.test(registerData.email.trim())) {
+      setRegisterEmailError(true);
+      return;
+    }
+    console.log('[TWM] Datos de registro de usuario', { ...registerData });
     setMode('login');
   };
 
+  const updateEmail = (setter, clearError) => (event) => {
+    updateData(setter)(event);
+    clearError(false);
+  };
+
+  const toggle = (setter, name) => () => setter((current) => ({ ...current, [name]: !current[name] }));
+
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#F5F3F0', color: COLORS.ink }}>
-      <Box component="header" sx={{ height: { xs: 72, md: 94 }, px: { xs: 2.5, md: 4.5 }, display: 'grid', gridTemplateColumns: { xs: '1fr auto', md: '40% 60%' }, alignItems: 'center', bgcolor: COLORS.white, borderBottom: '1px solid rgba(11,8,41,0.06)' }}>
-        <BrandMark />
-        <Stack direction="row" spacing={{ xs: 1, md: 4 }} justifyContent="flex-end" alignItems="center">
-          <Stack direction="row" spacing={{ xs: 1.5, md: 3.5 }} sx={{ display: { xs: 'none', md: 'flex' } }}>
-            {[].map((item) => <Typography key={item} sx={{ fontSize: 13, fontWeight: 800, color: COLORS.ink }}>{item}</Typography>)}
-          </Stack>
-
-        </Stack>
-      </Box>
-
-      <Box sx={{ display: { xs: 'block', md: 'grid' }, gridTemplateColumns: '40% 60%', minHeight: { md: 'calc(100vh - 94px)' } }}>
-        <DecorativePanel />
-        <Box sx={{ display: 'grid', placeItems: 'center', px: { xs: 2, sm: 4, lg: 8 }, py: { xs: 4, md: 4 } }}>
-          <Paper elevation={0} sx={{ width: '100%', maxWidth: 544, p: { xs: 3, sm: 5 }, borderRadius: '20px', bgcolor: COLORS.white, border: '1px solid rgba(11,8,41,0.08)', boxShadow: '0 18px 42px rgba(11,8,41,0.08)' }}>
-            <Stack spacing={2.8}>
-              <Box>
-                <Typography sx={{ color: COLORS.orange, fontSize: 11, fontWeight: 900, textTransform: 'uppercase', mb: 1.2 }}>{isLogin ? 'Bienvenido de vuelta' : 'Grupos · Nueva cuenta'}</Typography>
-                <Typography sx={{ color: COLORS.ink, fontSize: { xs: 31, sm: 38 }, lineHeight: 1.05, fontWeight: 900, letterSpacing: '-0.045em' }}>{isLogin ? 'Inicia sesión' : 'Crea tu cuenta'}</Typography>
-                <Typography sx={{ mt: 1.2, color: 'rgba(11,8,41,0.58)', fontSize: 14 }}>{isLogin ? 'Ingresa tus datos para continuar con tu cuenta.' : 'Completa tus datos para guardar favoritos y comprar más rápido.'}</Typography>
-              </Box>
-
-              {isLogin ? (
-                <Box component="form" onSubmit={submitLogin}>
-                  <Stack spacing={2.2}>
-                    <TextField name="email" label="Correo electrónico" placeholder="nombre@correo.com" type="email" value={loginData.email} onChange={updateData(setLoginData)} required fullWidth />
-                    <TextField name="password" label="Contraseña" placeholder="Mínimo 8 caracteres" type="password" value={loginData.password} onChange={updateData(setLoginData)} required fullWidth />
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <FormControlLabel control={<Checkbox name="remember" checked={loginData.remember} onChange={updateData(setLoginData)} />} label="Recordar sesión" sx={{ '& .MuiFormControlLabel-label': { fontSize: 12, color: 'rgba(11,8,41,0.58)' } }} />
-                      <Link component="button" type="button" underline="hover" sx={{ color: COLORS.orange, fontSize: 12, fontWeight: 800 }}>¿Olvidaste tu contraseña?</Link>
-                    </Stack>
-                    <Button type="submit" variant="contained" color="secondary" size="large" endIcon={<ArrowForwardIcon />} sx={{ height: 48, borderRadius: '10px', color: COLORS.ink, fontWeight: 900 }}>Iniciar sesión</Button>
+    <Box sx={{ minHeight: '100vh', bgcolor: COLORS.paper, color: COLORS.ink }}>
+      <AuthTopBar />
+      {isLogin ? (
+        <Box sx={{ display: { xs: 'block', md: 'grid' }, gridTemplateColumns: '1.25fr 1fr', minHeight: 'calc(100vh - 72px)' }}>
+          <Box sx={{ display: 'grid', placeItems: 'center', px: { xs: 2, sm: 4, lg: 8 }, py: { xs: 4, md: 6 } }}>
+            <Paper elevation={0} sx={{ width: '100%', maxWidth: 624, minHeight: { md: 588 }, p: { xs: 3, sm: 5 }, borderRadius: 3, border: `1px solid ${COLORS.border}`, bgcolor: '#FFFFFF', boxShadow: '0 18px 50px rgba(11,8,41,0.10)' }}>
+              <Stack spacing={3} sx={{ height: '100%' }}>
+                <Box>
+                  <Typography sx={{ fontSize: { xs: 32, sm: 42 }, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.05em' }}>Inicia sesión</Typography>
+                  <Typography sx={{ color: COLORS.muted, fontSize: 15, mt: 1.5 }}>Accede a tu cuenta y continúa descubriendo tu estilo.</Typography>
+                </Box>
+                <Box component="form" onSubmit={submitLogin} sx={{ flex: 1 }}>
+                  <Stack spacing={2.1}>
+                    <Field name="email" label="Correo electrónico" placeholder="nombre@gmail.com" type="email" value={loginData.email} onChange={updateEmail(setLoginData, setLoginEmailError)} error={loginEmailError} helperText={loginEmailError ? gmailErrorMessage : undefined} />
+                    <Field name="password" label="Contraseña" placeholder="••••••••" type={loginData.showPassword ? 'text' : 'password'} value={loginData.password} onChange={updateData(setLoginData)} endAdornment={<FormControlLabel control={<Checkbox size="small" name="showPassword" checked={loginData.showPassword} onChange={toggle(setLoginData, 'showPassword')} />} label="Mostrar contraseña" sx={{ mr: 0, whiteSpace: 'nowrap', '& .MuiFormControlLabel-label': { fontSize: 12, color: COLORS.muted } }} />} />
+                    <FormControlLabel control={<Checkbox name="remember" checked={loginData.remember} onChange={updateData(setLoginData)} />} label="Recordarme" sx={{ '& .MuiFormControlLabel-label': { fontSize: 14, color: COLORS.muted } }} />
+                    <Button type="submit" variant="contained" color="primary" endIcon={<ArrowForwardIcon />} sx={{ height: 58, borderRadius: '12px', fontWeight: 900, color: '#fff' }}>Iniciar sesión</Button>
                   </Stack>
                 </Box>
-              ) : (
-                <Box component="form" onSubmit={submitRegister}>
-                  <Stack spacing={1.8}>
-                    <TextField name="name" label="Nombre completo" placeholder="Tu nombre" value={registerData.name} onChange={updateData(setRegisterData)} required fullWidth />
-                    <TextField name="email" label="Correo electrónico" placeholder="nombre@correo.com" type="email" value={registerData.email} onChange={updateData(setRegisterData)} required fullWidth />
-                    <TextField name="phone" label="Teléfono" placeholder="+56 9 1234 5678" value={registerData.phone} onChange={updateData(setRegisterData)} required fullWidth />
-                    <TextField name="password" label="Contraseña" placeholder="Mínimo 8 caracteres" type="password" value={registerData.password} onChange={updateData(setRegisterData)} required fullWidth />
-                    <FormControlLabel control={<Checkbox name="acceptTerms" checked={registerData.acceptTerms} onChange={updateData(setRegisterData)} required />} label="Acepto los términos y la política de privacidad." sx={{ '& .MuiFormControlLabel-label': { fontSize: 12, color: 'rgba(11,8,41,0.58)' } }} />
-                    <Button type="submit" variant="contained" color="secondary" size="large" endIcon={<ArrowForwardIcon />} sx={{ height: 48, borderRadius: '10px', color: COLORS.ink, fontWeight: 900 }}>Crear cuenta</Button>
-                  </Stack>
-                </Box>
-              )}
-
-              <Typography align="center" sx={{ color: 'rgba(11,8,41,0.56)', fontSize: 12 }}>
-                {isLogin ? '¿Todavía no tienes una cuenta?' : '¿Ya tienes una cuenta?'}{' '}
-                <Link component="button" type="button" onClick={() => setMode(isLogin ? 'register' : 'login')} sx={{ color: COLORS.orange, fontWeight: 900, fontSize: 12 }}>{isLogin ? 'Regístrate' : 'Inicia sesión'}</Link>
-              </Typography>
-            </Stack>
-          </Paper>
+                <Typography align="center" sx={{ color: COLORS.muted, fontSize: 14, pt: 2 }}>¿Aún no tienes una cuenta?{' '}<Link component="button" type="button" onClick={() => setMode('register')} sx={{ color: COLORS.orange, fontWeight: 900, fontSize: 14 }}>Crear cuenta</Link></Typography>
+              </Stack>
+            </Paper>
+          </Box>
+          <LockArtwork />
         </Box>
-      </Box>
+      ) : (
+        <Box sx={{ display: { xs: 'block', md: 'grid' }, gridTemplateColumns: '0.8fr 1fr', minHeight: 'calc(100vh - 72px)' }}>
+          <LockArtwork register />
+          <Box sx={{ display: 'grid', placeItems: 'center', px: { xs: 2, sm: 4, lg: 8 }, py: { xs: 4, md: 5 } }}>
+            <Paper elevation={0} sx={{ width: '100%', maxWidth: 700, p: { xs: 3, sm: 5 }, borderRadius: 3, border: `1px solid ${COLORS.border}`, bgcolor: '#FFFFFF', boxShadow: '0 18px 50px rgba(11,8,41,0.10)' }}>
+              <Stack spacing={1.4}>
+                <Box sx={{ mb: 0.5 }}>
+                  <Typography sx={{ fontSize: { xs: 32, sm: 40 }, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.05em' }}>Crea tu cuenta</Typography>
+                  <Typography sx={{ color: COLORS.muted, fontSize: 15, mt: 1.2 }}>Completa tus datos para guardar favoritos y comprar más rápido.</Typography>
+                </Box>
+                <Box component="form" onSubmit={submitRegister}>
+                  <Stack spacing={1.5}>
+                    <Field name="name" label="Nombre completo" placeholder="Tu nombre" value={registerData.name} onChange={updateData(setRegisterData)} />
+                    <Field name="phone" label="Teléfono principal" placeholder="+56 9 5555 1122" value={registerData.phone} onChange={updateData(setRegisterData)} />
+                    <Field name="email" label="Correo electrónico" placeholder="nombre@gmail.com" type="email" value={registerData.email} onChange={updateEmail(setRegisterData, setRegisterEmailError)} error={registerEmailError} helperText={registerEmailError ? gmailErrorMessage : undefined} />
+                    <Field name="password" label="Contraseña" placeholder="Mínimo 8 caracteres" type={registerData.showPassword ? 'text' : 'password'} value={registerData.password} onChange={updateData(setRegisterData)} endAdornment={<FormControlLabel control={<Checkbox size="small" name="showPassword" checked={registerData.showPassword} onChange={toggle(setRegisterData, 'showPassword')} />} label="Mostrar contraseña" sx={{ mr: 0, whiteSpace: 'nowrap', '& .MuiFormControlLabel-label': { fontSize: 12, color: COLORS.muted } }} />} />
+                    <Field name="confirmPassword" label="Confirmar contraseña" placeholder="Repite tu contraseña" type={registerData.showConfirmPassword ? 'text' : 'password'} value={registerData.confirmPassword} onChange={updateData(setRegisterData)} endAdornment={<FormControlLabel control={<Checkbox size="small" name="showConfirmPassword" checked={registerData.showConfirmPassword} onChange={toggle(setRegisterData, 'showConfirmPassword')} />} label="Mostrar contraseña" sx={{ mr: 0, whiteSpace: 'nowrap', '& .MuiFormControlLabel-label': { fontSize: 12, color: COLORS.muted } }} />} />
+                    <FormControlLabel control={<Checkbox name="acceptTerms" checked={registerData.acceptTerms} onChange={updateData(setRegisterData)} required />} label="Acepto los términos y la política de privacidad." sx={{ '& .MuiFormControlLabel-label': { fontSize: 12, color: COLORS.muted } }} />
+                    <Button type="submit" variant="contained" color="secondary" endIcon={<ArrowForwardIcon />} sx={{ height: 58, borderRadius: '12px', fontWeight: 900, color: COLORS.ink }}>Crear cuenta</Button>
+                  </Stack>
+                </Box>
+                <Typography align="center" sx={{ color: COLORS.muted, fontSize: 14, pt: 1 }}>¿Ya tienes una cuenta?{' '}<Link component="button" type="button" onClick={() => setMode('login')} sx={{ color: COLORS.orange, fontWeight: 900, fontSize: 14 }}>Inicia sesión</Link></Typography>
+              </Stack>
+            </Paper>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }
