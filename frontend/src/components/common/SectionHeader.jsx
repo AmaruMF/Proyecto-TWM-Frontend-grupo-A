@@ -1,36 +1,16 @@
 import { Box, Button, Stack, Typography } from '@mui/material';
 
-function SectionHeader({ eyebrow, title, description, actionLabel, actionIcon, onAction }) {
+function SectionHeader({ title, description, actionLabel, actionIcon, onAction, extraActions }) {
   return (
-    <Stack
-      direction={{ xs: 'column', md: 'row' }}
-      spacing={2}
-      alignItems={{ xs: 'flex-start', md: 'center' }}
-      justifyContent="space-between"
-      sx={{ mb: 3 }}
-    >
+    <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 4, alignItems: { xs: 'flex-start', md: 'flex-end' }, justifyContent: 'space-between' }}>
       <Box>
-        <Typography variant="overline" sx={{ color: '#FF8400', fontWeight: 900, letterSpacing: 1.2 }}>
-          {eyebrow}
-        </Typography>
-        <Typography variant="h2" sx={{ mt: 0.5 }}>
-          {title}
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 760 }}>
-          {description}
-        </Typography>
+        <Typography sx={{ color: '#0B0829', fontSize: { xs: 30, md: 38 }, lineHeight: 1.08, fontWeight: 900, letterSpacing: '-0.045em' }}>{title}</Typography>
+        <Typography sx={{ color: '#6F6B78', mt: 1, maxWidth: 780, fontSize: 16 }}>{description}</Typography>
       </Box>
-      {actionLabel ? (
-        <Button
-          variant="contained"
-          color="secondary"
-          startIcon={actionIcon}
-          onClick={onAction}
-          sx={{ alignSelf: { xs: 'flex-start', md: 'center' }, whiteSpace: 'nowrap' }}
-        >
-          {actionLabel}
-        </Button>
-      ) : null}
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ width: { xs: '100%', md: 'auto' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+        {extraActions}
+        {actionLabel ? <Button variant="contained" color="primary" startIcon={actionIcon} onClick={onAction} sx={{ minHeight: 46, px: 2.5, borderRadius: 1.5, whiteSpace: 'nowrap' }}>{actionLabel}</Button> : null}
+      </Stack>
     </Stack>
   );
 }
