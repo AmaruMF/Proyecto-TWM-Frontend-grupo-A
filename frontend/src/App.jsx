@@ -9,10 +9,14 @@ import appTheme from './theme/appTheme';
 import { clientFields, initialClients, initialServices, serviceFields } from './data/initialData';
 
 function AppContent({ activeView }) {
+  if (activeView === 'dashboard') {
+    return <DashboardPage />;
+  }
+
   if (activeView === 'clients') {
     return (
       <CrudModule
-        eyebrow="CRUD 01"
+        key="clients"
         title="Gestion de clientes"
         description="Crea, consulta, edita y elimina clientes usando una tabla MUI y formularios en modal."
         entityName="cliente"
@@ -25,7 +29,7 @@ function AppContent({ activeView }) {
   if (activeView === 'services') {
     return (
       <CrudModule
-        eyebrow="CRUD 02"
+        key="services"
         title="Gestion de servicios"
         description="Administra los servicios del catalogo con el mismo componente reutilizable de CRUD."
         entityName="servicio"
