@@ -4,15 +4,13 @@ const appTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#0B0829',
-      dark: '#050318',
-      light: '#8FA0D8',
-      contrastText: '#F9DFC6',
-    },
-    secondary: {
       main: '#FF8400',
       dark: '#D66E00',
       light: '#F9DFC6',
+      contrastText: '#0B0829',
+    },
+    secondary: {
+      main: '#8FA0D8',
       contrastText: '#0B0829',
     },
     background: {
@@ -58,11 +56,23 @@ const appTheme = createTheme({
     },
   },
   components: {
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none', fontWeight: 800, color: '#0B0829',
+          '&.Mui-selected': { backgroundColor: '#FF8400', color: '#0B0829' },
+          '&.Mui-selected:hover': { backgroundColor: '#D66E00' },
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
           minHeight: 42,
           boxShadow: 'none',
+          '&.MuiButton-colorPrimary:not(.MuiButton-contained)': {
+            color: '#0B0829',
+          },
         },
         contained: {
           '&:hover': {
@@ -77,6 +87,21 @@ const appTheme = createTheme({
           backgroundImage: 'none',
           borderColor: 'rgba(11, 8, 41, 0.15)',
         },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: { '&.Mui-selected': { color: '#0B0829' } },
+      },
+    },
+    MuiLink: {
+      styleOverrides: {
+        root: { color: '#0B0829', textDecorationColor: '#FF8400' },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: { '&.Mui-focused': { color: '#0B0829' } },
       },
     },
     MuiCheckbox: {
@@ -94,7 +119,7 @@ const appTheme = createTheme({
         root: {
           backgroundColor: '#FFF8F0',
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#8FA0D8',
+            borderColor: '#FF8400',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderColor: '#FF8400',
@@ -110,9 +135,9 @@ const appTheme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         head: {
-          color: '#F9DFC6',
+          color: '#0B0829',
           fontWeight: 700,
-          backgroundColor: '#0B0829',
+          backgroundColor: '#FF8400',
         },
       },
     },

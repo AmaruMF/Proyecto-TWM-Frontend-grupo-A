@@ -1,146 +1,130 @@
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Link,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import logo from '../assets/figma/twm-logo.svg';
-import authLockLogo from '../assets/figma/auth-lock-correct.png';
-
-const COLORS = {
-  ink: '#0B0829', lavender: '#8FA0D8', orange: '#FF8400', cream: '#F9DFC6',
-  paper: '#FFFAF5', border: '#EADFD5', muted: '#6F6B78',
-};
-
-const loginInitial = { email: '', password: '', remember: true, showPassword: false };
-const registerInitial = { name: '', phone: '', email: '', password: '', confirmPassword: '', acceptTerms: false, showPassword: false, showConfirmPassword: false };
-const gmailPattern = /^[^\s@]+@gmail\.com$/i;
-const gmailErrorMessage = 'Ingresa un correo válido que termine en @gmail.com.';
-
-function AuthTopBar() {
-  return (
-    <Box component="header" sx={{ height: 72, px: { xs: 2, md: 6 }, display: 'flex', alignItems: 'center', bgcolor: COLORS.paper }}>
-      <Box component="img" src={logo} alt="TWM" sx={{ width: 62, height: 62, objectFit: 'contain', flexShrink: 0 }} />
-    </Box>
-  );
-}
-
-function LockArtwork({ register = false }) {
-  return (
-    <Box sx={{ position: 'relative', height: '100%', minHeight: 480, overflow: 'hidden', bgcolor: register ? COLORS.ink : COLORS.lavender }}>
-      <Box sx={{ position: 'absolute', top: register ? 40 : 36, left: register ? 44 : 104, width: register ? 182 : 180, height: register ? 140 : 180, borderRadius: register ? '30px' : '36px', bgcolor: register ? COLORS.lavender : COLORS.orange }} />
-      <Box sx={{ position: 'absolute', top: register ? 192 : 151, right: register ? 72 : 39, width: register ? 274 : 250, height: register ? 230 : 250, borderRadius: register ? '42px' : '48px', bgcolor: register ? COLORS.orange : COLORS.ink }} />
-      <Box component="img" src={authLockLogo} alt="Logo TWM" sx={{ position: 'absolute', left: '50%', bottom: 24, transform: 'translateX(-50%)', width: register ? '78%' : '68%', maxWidth: 466, height: 'auto', display: 'block' }} />
-    </Box>
-  );
-}
-
-function Field({ name, label, value, onChange, type = 'text', placeholder, required = true, endAdornment, error = false, helperText }) {
-  return <TextField name={name} label={label} placeholder={placeholder} type={type} value={value} onChange={onChange} required={required} error={error} helperText={helperText} fullWidth slotProps={{ input: { endAdornment } }} />;
-}
-
-function AuthPage({ onLogin }) {
-  const [mode, setMode] = useState('login');
-  const [loginData, setLoginData] = useState(loginInitial);
-  const [registerData, setRegisterData] = useState(registerInitial);
-  const [loginEmailError, setLoginEmailError] = useState(false);
-  const [registerEmailError, setRegisterEmailError] = useState(false);
-  const isLogin = mode === 'login';
-
-  const updateData = (setter) => (event) => {
-    const { name, value, checked, type } = event.target;
-    setter((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
+import { Alert, Box, Button, Checkbox, Divider, FormControlLabel, InputAdornment, IconButton, Link, Paper, Stack, TextField, Typography } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import Brand from '../components/common/Brand';
+import useMarketplace from '../hooks/useMarketplace';
+import { navigate } from '../hooks/useNavigation';
+export default function AuthPage({
+  onLogin
+}) {
+  const {
+    login
+  } = useMarketplace();
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const enter = (role = 'client') => {
+    login(role, remember);
+    if (onLogin) onLogin();else navigate('/inicio');
   };
-
-  const submitLogin = (event) => {
+  const submit = event => {
     event.preventDefault();
-    if (!gmailPattern.test(loginData.email.trim())) {
-      setLoginEmailError(true);
-      return;
-    }
-    console.log('[TWM] Datos de inicio de sesion', { ...loginData });
-    onLogin();
+    enter();
   };
-
-  const submitRegister = (event) => {
-    event.preventDefault();
-    if (!gmailPattern.test(registerData.email.trim())) {
-      setRegisterEmailError(true);
-      return;
-    }
-    console.log('[TWM] Datos de registro de usuario', { ...registerData });
-    setMode('login');
-  };
-
-  const updateEmail = (setter, clearError) => (event) => {
-    updateData(setter)(event);
-    clearError(false);
-  };
-
-  const toggle = (setter, name) => () => setter((current) => ({ ...current, [name]: !current[name] }));
-
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: COLORS.paper, color: COLORS.ink }}>
-      <AuthTopBar />
-      {isLogin ? (
-        <Box sx={{ display: { xs: 'block', md: 'grid' }, gridTemplateColumns: '1.25fr 1fr', minHeight: 'calc(100vh - 72px)' }}>
-          <Box sx={{ display: 'grid', placeItems: 'center', px: { xs: 2, sm: 4, lg: 8 }, py: { xs: 4, md: 6 } }}>
-            <Paper elevation={0} sx={{ width: '100%', maxWidth: 624, minHeight: { md: 588 }, p: { xs: 3, sm: 5 }, borderRadius: 3, border: `1px solid ${COLORS.border}`, bgcolor: '#FFFFFF', boxShadow: '0 18px 50px rgba(11,8,41,0.10)' }}>
-              <Stack spacing={3} sx={{ height: '100%' }}>
-                <Box>
-                  <Typography sx={{ fontSize: { xs: 32, sm: 42 }, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.05em' }}>Inicia sesión</Typography>
-                  <Typography sx={{ color: COLORS.muted, fontSize: 15, mt: 1.5 }}>Accede a tu cuenta y continúa descubriendo tu estilo.</Typography>
-                </Box>
-                <Box component="form" onSubmit={submitLogin} sx={{ flex: 1 }}>
-                  <Stack spacing={2.1}>
-                    <Field name="email" label="Correo electrónico" placeholder="nombre@gmail.com" type="email" value={loginData.email} onChange={updateEmail(setLoginData, setLoginEmailError)} error={loginEmailError} helperText={loginEmailError ? gmailErrorMessage : undefined} />
-                    <Field name="password" label="Contraseña" placeholder="••••••••" type={loginData.showPassword ? 'text' : 'password'} value={loginData.password} onChange={updateData(setLoginData)} endAdornment={<FormControlLabel control={<Checkbox size="small" name="showPassword" checked={loginData.showPassword} onChange={toggle(setLoginData, 'showPassword')} />} label="Mostrar contraseña" sx={{ mr: 0, whiteSpace: 'nowrap', '& .MuiFormControlLabel-label': { fontSize: 12, color: COLORS.muted } }} />} />
-                    <FormControlLabel control={<Checkbox name="remember" checked={loginData.remember} onChange={updateData(setLoginData)} />} label="Recordarme" sx={{ '& .MuiFormControlLabel-label': { fontSize: 14, color: COLORS.muted } }} />
-                    <Button type="submit" variant="contained" color="primary" endIcon={<ArrowForwardIcon />} sx={{ height: 58, borderRadius: '12px', fontWeight: 900, color: '#fff' }}>Iniciar sesión</Button>
-                  </Stack>
-                </Box>
-                <Typography align="center" sx={{ color: COLORS.muted, fontSize: 14, pt: 2 }}>¿Aún no tienes una cuenta?{' '}<Link component="button" type="button" onClick={() => setMode('register')} sx={{ color: COLORS.orange, fontWeight: 900, fontSize: 14 }}>Crear cuenta</Link></Typography>
-              </Stack>
-            </Paper>
-          </Box>
-          <LockArtwork />
-        </Box>
-      ) : (
-        <Box sx={{ display: { xs: 'block', md: 'grid' }, gridTemplateColumns: '0.8fr 1fr', minHeight: 'calc(100vh - 72px)' }}>
-          <LockArtwork register />
-          <Box sx={{ display: 'grid', placeItems: 'center', px: { xs: 2, sm: 4, lg: 8 }, py: { xs: 4, md: 5 } }}>
-            <Paper elevation={0} sx={{ width: '100%', maxWidth: 700, p: { xs: 3, sm: 5 }, borderRadius: 3, border: `1px solid ${COLORS.border}`, bgcolor: '#FFFFFF', boxShadow: '0 18px 50px rgba(11,8,41,0.10)' }}>
-              <Stack spacing={1.4}>
-                <Box sx={{ mb: 0.5 }}>
-                  <Typography sx={{ fontSize: { xs: 32, sm: 40 }, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.05em' }}>Crea tu cuenta</Typography>
-                  <Typography sx={{ color: COLORS.muted, fontSize: 15, mt: 1.2 }}>Completa tus datos para guardar favoritos y comprar más rápido.</Typography>
-                </Box>
-                <Box component="form" onSubmit={submitRegister}>
-                  <Stack spacing={1.5}>
-                    <Field name="name" label="Nombre completo" placeholder="Tu nombre" value={registerData.name} onChange={updateData(setRegisterData)} />
-                    <Field name="phone" label="Teléfono principal" placeholder="+56 9 5555 1122" value={registerData.phone} onChange={updateData(setRegisterData)} />
-                    <Field name="email" label="Correo electrónico" placeholder="nombre@gmail.com" type="email" value={registerData.email} onChange={updateEmail(setRegisterData, setRegisterEmailError)} error={registerEmailError} helperText={registerEmailError ? gmailErrorMessage : undefined} />
-                    <Field name="password" label="Contraseña" placeholder="Mínimo 8 caracteres" type={registerData.showPassword ? 'text' : 'password'} value={registerData.password} onChange={updateData(setRegisterData)} endAdornment={<FormControlLabel control={<Checkbox size="small" name="showPassword" checked={registerData.showPassword} onChange={toggle(setRegisterData, 'showPassword')} />} label="Mostrar contraseña" sx={{ mr: 0, whiteSpace: 'nowrap', '& .MuiFormControlLabel-label': { fontSize: 12, color: COLORS.muted } }} />} />
-                    <Field name="confirmPassword" label="Confirmar contraseña" placeholder="Repite tu contraseña" type={registerData.showConfirmPassword ? 'text' : 'password'} value={registerData.confirmPassword} onChange={updateData(setRegisterData)} endAdornment={<FormControlLabel control={<Checkbox size="small" name="showConfirmPassword" checked={registerData.showConfirmPassword} onChange={toggle(setRegisterData, 'showConfirmPassword')} />} label="Mostrar contraseña" sx={{ mr: 0, whiteSpace: 'nowrap', '& .MuiFormControlLabel-label': { fontSize: 12, color: COLORS.muted } }} />} />
-                    <FormControlLabel control={<Checkbox name="acceptTerms" checked={registerData.acceptTerms} onChange={updateData(setRegisterData)} required />} label="Acepto los términos y la política de privacidad." sx={{ '& .MuiFormControlLabel-label': { fontSize: 12, color: COLORS.muted } }} />
-                    <Button type="submit" variant="contained" color="secondary" endIcon={<ArrowForwardIcon />} sx={{ height: 58, borderRadius: '12px', fontWeight: 900, color: COLORS.ink }}>Crear cuenta</Button>
-                  </Stack>
-                </Box>
-                <Typography align="center" sx={{ color: COLORS.muted, fontSize: 14, pt: 1 }}>¿Ya tienes una cuenta?{' '}<Link component="button" type="button" onClick={() => setMode('login')} sx={{ color: COLORS.orange, fontWeight: 900, fontSize: 14 }}>Inicia sesión</Link></Typography>
-              </Stack>
-            </Paper>
-          </Box>
-        </Box>
-      )}
+  return <Box sx={{
+    minHeight: '100dvh',
+    bgcolor: 'background.paper'
+  }}>
+    <Box component="header" sx={{
+      bgcolor: 'primary.main',
+      px: {
+        xs: 2,
+        md: 6
+      },
+      height: 84,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between'
+    }}><Brand /><Button onClick={() => navigate('/')}>Explorar tienda</Button></Box>
+    <Box component="main" sx={{
+      display: 'grid',
+      gridTemplateColumns: {
+        xs: '1fr',
+        md: '1fr 1fr'
+      },
+      minHeight: 'calc(100dvh - 84px)'
+    }}>
+      <Box sx={{
+        display: {
+          xs: 'none',
+          md: 'grid'
+        },
+        placeItems: 'center',
+        bgcolor: 'background.default',
+        p: 8
+      }}><Box sx={{
+          width: '100%',
+          maxWidth: 390,
+          aspectRatio: '1',
+          bgcolor: 'secondary.main',
+          borderRadius: 6,
+          p: 6,
+          transform: 'rotate(-3deg)'
+        }}><img src="/LogoAzulOscuro.svg" alt="Multiplaza" style={{
+            display: 'block',
+            width: '100%',
+            height: '100%'
+          }} /></Box></Box>
+      <Box sx={{
+        bgcolor: 'secondary.light',
+        p: {
+          xs: 3,
+          sm: 6,
+          lg: 9
+        },
+        display: 'grid',
+        alignItems: 'center'
+      }}>
+        <Paper elevation={0} sx={{
+          p: {
+            xs: 3,
+            sm: 4
+          },
+          borderRadius: 3,
+          width: '100%',
+          maxWidth: 560,
+          mx: 'auto'
+        }}>
+          <Typography component="h1" sx={{
+            fontSize: {
+              xs: 30,
+              md: 38
+            },
+            fontWeight: 900,
+            mb: 1
+          }}>Inicia sesión</Typography><Typography color="text.secondary" sx={{
+            fontSize: 14,
+            mb: 3
+          }}>Accede a tu cuenta y continúa descubriendo Multiplaza.</Typography>
+          <Alert severity="info" sx={{
+            mb: 3
+          }}>Acceso de demostración. Usa los botones de ejemplo para recorrer las vistas.</Alert>
+          <Box component="form" onSubmit={submit}><Stack spacing={2.5}>
+            <TextField name="identifier" label="Correo electrónico o RUN" placeholder="nombre@gmail.com o 12.345.678-9" required fullWidth autoComplete="username" />
+            <TextField name="password" label="Contraseña" type={showPassword ? 'text' : 'password'} required fullWidth autoComplete="current-password" slotProps={{
+                input: {
+                  endAdornment: <InputAdornment position="end"><IconButton aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setShowPassword(!showPassword)} edge="end">{showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}</IconButton></InputAdornment>
+                }
+              }} />
+            <FormControlLabel label="Mantener sesión activa" control={<Checkbox checked={remember} onChange={event => setRemember(event.target.checked)} />} />
+            <Button variant="contained" type="submit" size="large">Iniciar sesión</Button>
+          </Stack></Box>
+          <Typography align="center" sx={{
+            mt: 3,
+            fontSize: 14
+          }}>¿Aún no tienes una cuenta? <Link component="button" onClick={() => navigate('/registro')} sx={{
+              fontWeight: 800
+            }}>Crear cuenta</Link></Typography>
+          <Divider sx={{
+            my: 3
+          }}>Cuentas de ejemplo</Divider><Stack direction={{
+            xs: 'column',
+            sm: 'row'
+          }} sx={{
+            gap: 1
+          }}><Button variant="outlined" fullWidth onClick={() => enter('client')}>Entrar como cliente</Button><Button variant="outlined" fullWidth onClick={() => enter('seller')}>Entrar como vendedor</Button></Stack>
+        </Paper>
+      </Box>
     </Box>
-  );
+  </Box>;
 }
-
-export default AuthPage;
