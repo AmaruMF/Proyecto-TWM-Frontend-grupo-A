@@ -5,6 +5,7 @@ import PagePanel from '../../components/common/PagePanel';
 import AddressFields from '../../components/forms/AddressFields';
 import useMarketplace from '../../hooks/useMarketplace';
 import { navigate } from '../../hooks/useNavigation';
+import { isAdult, validRut } from '../../utils/validation';
 import { today } from '../../utils/commerce';
 const emptyAddress = {
   region: '',
@@ -14,15 +15,17 @@ const emptyAddress = {
   number: ''
 };
 export default function RegistrationPage({
-  company = false
+  company = false,
+  seller = false
 }) {
   const {
     data,
     setData,
     login,
+    registerProfile,
     notify
   } = useMarketplace();
-  const [business, setBusiness] = useState(false);
+  const [business, setBusiness] = useState(seller);
   const [physical, setPhysical] = useState(true);
   const [offering, setOffering] = useState('Producto');
   const [phones, setPhones] = useState(['']);
@@ -31,8 +34,10 @@ export default function RegistrationPage({
   }]);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [touched, setTouched] = useState({});
   const [values, setValues] = useState({
     name: '',
+    lastName: '',
     run: '',
     email: '',
     birthday: '',
@@ -53,6 +58,16 @@ export default function RegistrationPage({
   const setAddress = (index, address) => setAddresses(current => current.map((item, itemIndex) => itemIndex === index ? address : item));
   const submit = event => {
     event.preventDefault();
+    setTouched({ run: true, rut: true, birthday: true });
+    if (company ? !values.companyName.trim() : !values.name.trim() || !values.lastName.trim()) { setError('Completa el nombre y los apellidos o la razón social con texto válido.'); return; }
+    if (!validRut(company ? values.rut : values.run)) {
+      setError('El RUT/RUN es inválido. Revisa el número y el dígito verificador.');
+      return;
+    }
+    if ((company || business) && !isAdult(company ? data.profile.birthday : values.birthday, today())) {
+      setError(company ? 'Para vender debes tener 18 años cumplidos. Revisa tu fecha de nacimiento en Mi cuenta.' : 'Para registrarte como vendedor debes tener 18 años cumplidos.');
+      return;
+    }
     if (!company && !/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(values.password)) {
       setError('Usa al menos 8 caracteres, una mayúscula, un número y un símbolo.');
       return;
@@ -64,6 +79,7 @@ export default function RegistrationPage({
     if (company) {
       setData(current => ({
         ...current,
+        profile: { ...current.profile, accountType: 'seller', companyRegistrationPending: false },
         company: {
           name: values.companyName.trim(),
           rut: values.rut.trim(),
@@ -79,34 +95,28 @@ export default function RegistrationPage({
       notify('Empresa registrada. Ya puedes gestionar tus publicaciones.');
       navigate('/inicio');
     } else {
-      const parts = values.name.trim().split(/\s+/);
-      setData(current => ({
-        ...current,
-        profile: {
-          ...current.profile,
-          name: parts.shift(),
-          lastName: parts.join(' '),
-          run: values.run,
-          email: values.email.trim(),
-          phone: phones[0],
-          phones,
-          birthday: values.birthday,
-          location: `${addresses[0].city}, Chile`,
-          addresses
-        }
-      }));
-      login('client');
-      notify(business ? 'Datos personales guardados. Completa tu empresa.' : 'Cuenta de ejemplo creada.');
+      if (!registerProfile({
+        name: values.name.trim(),
+        lastName: values.lastName.trim(),
+        run: values.run,
+        email: values.email.trim(),
+        phone: phones[0],
+        phones,
+        birthday: values.birthday,
+        location: `${addresses[0].city}, Chile`,
+        addresses
+      }, business)) return;
+      notify(business ? 'Cuenta de vendedor creada. Completa los datos de tu empresa.' : 'Cuenta de ejemplo creada.');
       navigate(business ? '/registro-empresa' : '/inicio');
     }
   };
   return <Box sx={{
     maxWidth: 1064,
     mx: 'auto'
-  }}><SectionHeader title={company ? 'Registra tu empresa' : 'Crea tu cuenta'} description={company ? 'Completa la información comercial para comenzar a vender en Multiplaza.' : 'Compra de forma segura y guarda tus direcciones para tus próximos pedidos.'} />
+  }}><SectionHeader title={company ? 'Registra tu empresa' : business ? 'Crea tu cuenta de vendedor' : 'Crea tu cuenta'} description={company ? 'Completa la información comercial para comenzar a vender en Multiplaza.' : 'Compra de forma segura y guarda tus direcciones para tus próximos pedidos.'} />
     {company && <Alert severity="info" sx={{
       mb: 3
-    }}>Tus datos personales ya están guardados. Usaremos la información de {data.profile.name} para identificar al emprendedor.</Alert>}
+    }}>{data.profile.accountType === 'seller' ? 'Tu cuenta de vendedor está creada.' : 'Completa tu empresa para activar tu cuenta de vendedor.'} Tus datos personales ya están guardados. Usaremos la información de {data.profile.name} para identificar al emprendedor.</Alert>}
     <PagePanel component="form" onSubmit={submit} sx={{
       borderRadius: 3
     }}><Stack spacing={3.5}>
@@ -125,14 +135,14 @@ export default function RegistrationPage({
           },
           gap: 2.5
         }}>
-        {company ? <><TextField label="Razón social / Nombre de la empresa" required value={values.companyName} onChange={update('companyName')} /><TextField label="RUT" placeholder="76.123.456-7" required value={values.rut} onChange={update('rut')} /></> : <><TextField label="Nombre completo" required value={values.name} onChange={update('name')} autoComplete="name" /><TextField label="RUN" placeholder="12.345.678-9" required value={values.run} onChange={update('run')} /></>}
+        {company ? <><TextField label="Razón social / Nombre de la empresa" required value={values.companyName} onChange={update('companyName')} /><TextField label="RUT" error={Boolean(touched.rut && !validRut(values.rut))} helperText={touched.rut && !validRut(values.rut) ? "RUT inválido: revisa el dígito verificador." : "Ejemplo: 76.123.456-0"} onBlur={() => setTouched(current => ({ ...current, rut: true }))} placeholder="76.123.456-0" required value={values.rut} onChange={update('rut')} /></> : <><TextField label="Nombres" required value={values.name} onChange={update('name')} autoComplete="given-name" /><TextField label="Apellidos" required value={values.lastName} onChange={update('lastName')} autoComplete="family-name" /><TextField label="RUN" error={Boolean(touched.run && !validRut(values.run))} helperText={touched.run && !validRut(values.run) ? "RUN inválido: revisa el dígito verificador." : "Ejemplo: 12.345.678-5"} onBlur={() => setTouched(current => ({ ...current, run: true }))} placeholder="12.345.678-5" required value={values.run} onChange={update('run')} /></>}
         <TextField label="Teléfono principal" type="tel" value={phones[0]} onChange={event => setPhones(current => [event.target.value, ...current.slice(1)])} required autoComplete="tel" />
         <TextField label="Correo electrónico" type="email" value={company ? values.companyEmail : values.email} onChange={update(company ? 'companyEmail' : 'email')} required autoComplete="email" />
         {phones.slice(1).map((phone, index) => <TextField key={index} label={`Teléfono adicional ${index + 1}`} value={phone} type="tel" onChange={event => setPhones(current => current.map((item, itemIndex) => itemIndex === index + 1 ? event.target.value : item))} />)}
         {company && <TextField label="Sitio web (opcional)" placeholder="https://www.empresa.cl" value={values.website} onChange={update('website')} />}
       </Box>
       <Box><Button variant="outlined" onClick={() => setPhones(current => [...current, ''])}>＋ Agregar otro teléfono</Button></Box>
-      {!company && <TextField label="Fecha de nacimiento" type="date" required value={values.birthday} onChange={update('birthday')} slotProps={{
+      {!company && <TextField label="Fecha de nacimiento" error={Boolean(business && touched.birthday && !isAdult(values.birthday, today()))} helperText={business ? "Para vender debes tener 18 años cumplidos." : undefined} onBlur={() => setTouched(current => ({ ...current, birthday: true }))} type="date" required value={values.birthday} onChange={update('birthday')} slotProps={{
           inputLabel: {
             shrink: true
           },
@@ -164,7 +174,7 @@ export default function RegistrationPage({
               sm: '1fr 1fr'
             },
             gap: 2.5
-          }}><TextField label="Contraseña" type={showPassword ? 'text' : 'password'} required value={values.password} onChange={update('password')} autoComplete="new-password" /><TextField label="Confirmar contraseña" type={showPassword ? 'text' : 'password'} required value={values.confirm} onChange={update('confirm')} autoComplete="new-password" error={Boolean(error)} /></Box><FormControlLabel label="Mostrar contraseñas" control={<Checkbox checked={showPassword} onChange={event => setShowPassword(event.target.checked)} />} /></>}
+          }}><TextField label="Contraseña" type={showPassword ? 'text' : 'password'} required value={values.password} onChange={update('password')} autoComplete="new-password" /><TextField label="Confirmar contraseña" type={showPassword ? 'text' : 'password'} required value={values.confirm} onChange={update('confirm')} autoComplete="new-password" error={Boolean(values.confirm && values.password !== values.confirm)} /></Box><FormControlLabel label="Mostrar contraseñas" control={<Checkbox checked={showPassword} onChange={event => setShowPassword(event.target.checked)} />} /></>}
       {error && <Alert severity="error" role="alert">{error}</Alert>}
       <Stack direction="row" sx={{
           justifyContent: "space-between"

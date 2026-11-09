@@ -4,7 +4,7 @@ import PagePanel from '../../components/common/PagePanel';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatusProgress from '../../components/common/StatusProgress';
 import useMarketplace from '../../hooks/useMarketplace';
-import { currency, dateLabel } from '../../utils/commerce';
+import { currency, dateLabel, dateTimeLabel } from '../../utils/commerce';
 export default function QuotesPage({
   management = false
 }) {
@@ -25,6 +25,7 @@ export default function QuotesPage({
         ...quote,
         price: Number(price),
         reply: reply.trim(),
+        repliedAt: new Date().toISOString(),
         step: 1
       } : quote)
     }));
@@ -40,7 +41,7 @@ export default function QuotesPage({
           mt: 1
         }}>Cliente: {quote.customer}</Typography><Typography variant="body2" sx={{
           mt: 0.5
-        }}>Para fecha: {dateLabel(quote.date)}</Typography><StatusProgress labels={['Solicitada', 'Respondida', 'Aceptada por el cliente', 'Expirada']} step={quote.step} /><Typography sx={{
+        }}>Para fecha: {dateLabel(quote.date)}</Typography><Typography variant="body2" sx={{ mt: 0.5 }}>Enviada: {dateTimeLabel(quote.sentAt)}{quote.sentAt ? " (hora de Chile)" : ""}</Typography><StatusProgress labels={['Solicitada', 'Respondida', 'Aceptada por el cliente', 'Expirada']} step={quote.step} /><Typography sx={{
           fontSize: 14,
           mb: 2
         }}>{quote.detail}</Typography>{quote.price > 0 && <Typography sx={{
@@ -62,7 +63,7 @@ export default function QuotesPage({
               } : item)
             }));
             notify('Cotización aceptada.');
-          }}>Aceptar cotización</Button>}<Button variant="outlined" onClick={() => openChat(management ? quote.customer : quote.seller || 'Profesional', `Cotización #${quote.id}`)}>Ver mensajes</Button></Stack></PagePanel>)}</Stack>
+          }}>Aceptar cotización</Button>}<Button variant="outlined" onClick={() => openChat(quote.seller || data.services.find(service => service.id === quote.serviceId)?.seller || 'Profesional', `Cotización #${quote.id}`, quote.customer)}>Ver mensajes</Button></Stack></PagePanel>)}</Stack>
     <Dialog open={Boolean(target)} onClose={() => setTarget(null)} fullWidth maxWidth="sm"><form onSubmit={submit}><DialogTitle>Responder cotización #{target?.id}</DialogTitle><DialogContent><Stack spacing={3} sx={{
             pt: 1
           }}><TextField label="Valor del servicio (CLP)" type="number" required value={price} onChange={event => setPrice(event.target.value)} slotProps={{

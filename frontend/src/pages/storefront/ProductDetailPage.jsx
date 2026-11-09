@@ -26,7 +26,7 @@ export default function ProductDetailPage({
   const [quantity, setQuantity] = useState(1);
   const [question, setQuestion] = useState('');
   const [quoteOpen, setQuoteOpen] = useState(false);
-  if (!product) return <EmptyState title="Publicación no encontrada" actionLabel="Explorar catálogo" onAction={() => navigate('/productos')} />;
+  if (!product || product.hidden) return <EmptyState title="Publicación no encontrada" actionLabel="Explorar catálogo" onAction={() => navigate('/productos')} />;
   const askLogin = action => {
     if (!session) {
       navigate('/acceso');
@@ -34,7 +34,7 @@ export default function ProductDetailPage({
     }
     action();
   };
-  const favorite = data.wishlists[0].productIds.includes(id);
+  const favorite = data.wishlists.find(list => list.id === 'favorites')?.productIds.includes(id);
   const buyNow = () => askLogin(() => {
     setData(current => ({
       ...current,
@@ -229,7 +229,7 @@ export default function ProductDetailPage({
       mt: 5, maxWidth: 800, mx: 'auto'
     }}><Typography component="h2" variant="h3" align="center" sx={{
         mb: 3
-      }}>Quienes compraron este producto también compraron...</Typography><CatalogGrid columns={3} items={data.products.filter(item => item.id !== id && ['air-jordan', 'iphone', 'nespresso'].includes(item.id))} /></Box>}
+      }}>Quienes compraron este producto también compraron...</Typography><CatalogGrid columns={3} items={data.products.filter(item => !item.hidden && item.id !== id && ['air-jordan', 'iphone', 'nespresso'].includes(item.id))} /></Box>}
     {quoteOpen && <QuoteDialog service={product} onClose={() => setQuoteOpen(false)} />}
   </>;
 }

@@ -128,8 +128,16 @@ const appTheme = createTheme({
       },
     },
     MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiInputLabel-root': { position: 'static', transform: 'none', maxWidth: '100%', whiteSpace: 'normal', marginBottom: 6, fontSize: 14, fontWeight: 600 },
+          '& .MuiOutlinedInput-notchedOutline legend': { display: 'none' },
+          '& .MuiOutlinedInput-notchedOutline': { top: 0 },
+        },
+      },
       defaultProps: {
         size: 'small',
+        slotProps: { inputLabel: { shrink: true } },
       },
     },
     MuiTableCell: {

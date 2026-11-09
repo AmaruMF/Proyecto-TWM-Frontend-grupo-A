@@ -1,131 +1,28 @@
-import { useEffect, useRef, useState } from 'react';
-import { Box, Button, IconButton, List, ListItemButton, ListItemText, Paper, Stack, TextField, Typography } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import SectionHeader from '../../components/common/SectionHeader';
-import DesignIcon from '../../components/common/DesignIcon';
+import PagePanel from '../../components/common/PagePanel';
+import EmptyState from '../../components/common/EmptyState';
+import ChatDialog from '../../components/messages/ChatDialog';
 import useMarketplace from '../../hooks/useMarketplace';
+import { sentMessages, legacyMessages, recipientName, roleLabel } from '../../utils/messages';
+import { dateTimeLabel } from '../../utils/commerce';
 import { navigate } from '../../hooks/useNavigation';
-export default function MessagesPage({
-  id
-}) {
-  const {
-    data,
-    setData
-  } = useMarketplace();
-  const [message, setMessage] = useState('');
-  const thread = data.messages.find(item => item.id === id) || data.messages[0];
-  const end = useRef(null);
-  useEffect(() => {
-    end.current?.scrollIntoView({
-      block: 'nearest'
-    });
-  }, [thread?.id, thread?.messages.length]);
-  const send = event => {
-    event.preventDefault();
-    if (!message.trim()) return;
-    const entry = {
-      id: crypto.randomUUID(),
-      incoming: false,
-      text: message.trim(),
-      time: new Intl.DateTimeFormat('es-CL', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(new Date())
-    };
-    setData(current => ({
-      ...current,
-      messages: current.messages.map(item => item.id === thread.id ? {
-        ...item,
-        messages: [...item.messages, entry]
-      } : item)
-    }));
-    setMessage('');
-  };
-  return <><SectionHeader title="Mensajes" description="Consulta tus conversaciones antes y después de la compra." /><Box sx={{
-      display: 'grid',
-      gridTemplateColumns: {
-        xs: '1fr',
-        lg: 'minmax(200px, 0.8fr) minmax(0, 1.2fr)'
-      },
-      gap: 3
-    }}>
-    <Paper variant="outlined" sx={{
-        alignSelf: 'start',
-        maxHeight: {
-          xs: 180,
-          lg: 650
-        },
-        overflowY: 'auto'
-      }}><List>{data.messages.map(item => <ListItemButton selected={item.id === thread?.id} key={item.id} onClick={() => {
-            setMessage('');
-            navigate(`/mensajes/${item.id}`);
-          }}><ListItemText primary={item.seller} secondary={item.context} slotProps={{
-              primary: {
-                fontWeight: 800
-              }
-            }} /></ListItemButton>)}</List></Paper>
-    {thread ? <Box sx={{
-        height: 650,
-        maxHeight: {
-          xs: '75dvh',
-          lg: 650
-        },
-        bgcolor: 'secondary.light',
-        border: '1px solid',
-        borderColor: 'primary.main',
-        borderRadius: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-      <Stack direction="row" sx={{
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          p: 2,
-          alignItems: "center",
-          gap: 2
-        }}><DesignIcon name="account" inverse /><Box><Typography sx={{
-              fontWeight: 800
-            }}>{thread.seller}</Typography><Typography sx={{
-              fontSize: 12
-            }}>{thread.context}</Typography></Box></Stack>
-      <Stack role="log" aria-label={`Conversación con ${thread.seller}`} aria-live="polite" spacing={2} sx={{
-          p: 2.5,
-          flex: 1,
-          overflowY: 'auto'
-        }}>{thread.messages.map(item => <Box key={item.id} sx={{
-            p: 2,
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            maxWidth: '85%',
-            alignSelf: item.incoming ? 'flex-start' : 'flex-end',
-            minWidth: 120
-          }}><Typography sx={{
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'anywhere',
-              fontSize: 14
-            }}>{item.text}</Typography><Typography sx={{
-              mt: 1,
-              fontSize: 11,
-              textAlign: 'right',
-              color: 'text.secondary'
-            }}>{item.time}</Typography></Box>)}<div ref={end} /></Stack>
-      <Box component="form" onSubmit={send} sx={{
-          p: 2,
-          display: 'flex',
-          gap: 1
-        }}><TextField label="Escribe tu mensaje aquí" value={message} onChange={event => setMessage(event.target.value)} fullWidth slotProps={{
-            htmlInput: {
-              maxLength: 2000
-            }
-          }} /><IconButton aria-label="Enviar mensaje" type="submit" disabled={!message.trim()} sx={{
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            borderRadius: 1,
-            '&:hover': {
-              bgcolor: 'primary.dark'
-            }
-          }}><SendIcon /></IconButton></Box>
-    </Box> : <Box><Typography>No hay conversaciones.</Typography><Button onClick={() => navigate('/productos')}>Explorar productos</Button></Box>}
-  </Box></>;
+
+export default function MessagesPage({ id, embedded = false }) {
+  const { data, session, openConversation } = useMarketplace();
+  const role = session?.role || 'client';
+  const sent = [...sentMessages(data.messages, role), ...legacyMessages(data.messages)].sort((a, b) => (b.sentAt || '').localeCompare(a.sentAt || ''));
+  return <>
+    {embedded ? <Typography component="h2" variant="h3" sx={{ mb: 2 }}>Historial de mensajes enviados</Typography> : <SectionHeader title="Historial de mensajes enviados" description="Revisa tus mensajes y abre una conversación en una ventana emergente." />}
+    <Typography variant="body2" sx={{ mb: 2 }}>Mensajes enviados como {roleLabel(role).toLowerCase()}.</Typography>
+    <Stack spacing={2}>{sent.map(message => <PagePanel key={`${message.thread.id}-${message.id}`}>
+      <Typography sx={{ fontWeight: 800 }}>{message.legacy ? 'Mensaje anterior · remitente no registrado' : `Para ${recipientName(message.thread, role)}`} · {message.thread.context}</Typography>
+      <Typography sx={{ my: 1, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{message.text}</Typography>
+      <Typography variant="body2" color="text.secondary">{message.sentAt ? dateTimeLabel(message.sentAt) : message.time || 'Hora no registrada'}</Typography>
+      <Button sx={{ mt: 1 }} variant="outlined" onClick={() => openConversation(message.thread.id)}>Abrir chat</Button>
+    </PagePanel>)}</Stack>
+    {!sent.length && <EmptyState title="Aún no has enviado mensajes" description="Abre una conversación para contactar al vendedor." />}
+    {data.messages.length > 0 && <Box sx={{ mt: 3 }}><Typography component="h3" sx={{ fontWeight: 700, mb: 1 }}>Conversaciones</Typography><Stack spacing={1}>{data.messages.map(thread => <Button key={thread.id} variant="outlined" onClick={() => openConversation(thread.id)}>{recipientName(thread, role)} · {thread.context}</Button>)}</Stack></Box>}
+    {id && <ChatDialog key={id} id={id} onClose={() => navigate('/mensajes')} />}
+  </>;
 }

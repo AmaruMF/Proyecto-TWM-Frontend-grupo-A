@@ -16,9 +16,11 @@ function displayValue(value, fieldName) {
   return value;
 }
 
-function CrudModule({ title, description, entityName, fields, initialRows }) {
+function CrudModule({ title, description, entityName, fields, initialRows, rows: suppliedRows, onRowsChange }) {
   const emptyRecord = useMemo(() => buildEmptyRecord(fields), [fields]);
-  const [rows, setRows] = useState(initialRows);
+  const [localRows, setLocalRows] = useState(initialRows);
+  const rows = suppliedRows ?? localRows;
+  const setRows = onRowsChange || setLocalRows;
   const [formValues, setFormValues] = useState(emptyRecord);
   const [editingRow, setEditingRow] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -58,7 +60,7 @@ function CrudModule({ title, description, entityName, fields, initialRows }) {
       <SectionHeader
         title={title}
         description={description}
-        extraActions={<TextField value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Buscar ${entityName}`} aria-label={`Buscar ${entityName}`} sx={{ minWidth: { sm: 220 } }} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />}
+        extraActions={<TextField label={`Buscar ${entityName}`} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Buscar ${entityName}`} aria-label={`Buscar ${entityName}`} sx={{ minWidth: { sm: 220 } }} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />}
         actionLabel={`Nuevo ${entityName}`}
         actionIcon={<AddIcon />}
         onAction={openCreateForm}

@@ -7,7 +7,7 @@ import DesignIcon from '../common/DesignIcon';
 import useMarketplace from '../../hooks/useMarketplace';
 import { navigate } from '../../hooks/useNavigation';
 const mainLinks = [['cuenta', 'Mi cuenta', 'account'], ['pedidos', 'Mis pedidos', 'orders'], ['devoluciones', 'Devoluciones y reembolsos', 'bag'], ['transacciones', 'Historial de transacciones', 'history'], ['carrito', 'Carrito', 'cart'], ['cotizaciones', 'Cotizaciones', 'quote'], ['deseos', 'Lista de deseos', 'favorite'], ['mensajes', 'Mensajes', 'message']];
-const sellerLinks = [['inventario', 'Productos e inventario', 'product'], ['servicios-vendedor', 'Servicios', 'service'], ['oferta', 'Ofertas', 'offer'], ['publicaciones', 'Publicaciones', 'publications'], ['gestion', 'Gestión de cotizaciones', 'management'], ['clientes', 'Clientes', 'account']];
+const sellerLinks = [['ventas', 'Historial de ventas', 'orders'], ['inventario', 'Productos e inventario', 'product'], ['servicios-vendedor', 'Servicios', 'service'], ['oferta', 'Ofertas', 'offer'], ['publicaciones', 'Publicaciones', 'publications'], ['gestion', 'Gestión de cotizaciones', 'management'], ['clientes', 'Clientes', 'account']];
 function Sidebar({
   activeView,
   onNavigate,
@@ -196,7 +196,7 @@ export default function AppShell({
               sm: 'block'
             }
           }}>
-            <TextField value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar productos, servicios y más..." fullWidth slotProps={{
+            <TextField label="Buscar productos y servicios" value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar productos, servicios y más..." fullWidth slotProps={{
               htmlInput: {
                 'aria-label': 'Buscar productos y servicios'
               },
@@ -212,7 +212,7 @@ export default function AppShell({
             xs: 'block',
             sm: 'none'
           }
-        }}><TextField value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar en Multiplaza" fullWidth slotProps={{
+        }}><TextField label="Buscar productos y servicios" value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar en Multiplaza" fullWidth slotProps={{
             htmlInput: {
               'aria-label': 'Buscar productos y servicios'
             },

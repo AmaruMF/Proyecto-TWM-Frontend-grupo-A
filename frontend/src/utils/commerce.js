@@ -1,6 +1,7 @@
 export const currency = (value) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(value);
 export const dateLabel = (value) => new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium' }).format(new Date(`${value}T12:00:00`));
 export const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Santiago' }).format(new Date());
+export const dateTimeLabel = (value) => value && !Number.isNaN(new Date(value).getTime()) ? new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' }).format(new Date(value)) : 'Fecha y hora no registradas';
 
 export function cartItems(cart, products) {
   return cart.map((entry) => {
@@ -16,7 +17,7 @@ export function orderTotals(items, shipping = 0) {
 }
 
 export function addCartItem(cart, product, quantity = 1) {
-  if (!Number.isInteger(quantity) || quantity < 1 || product.stock < 1) return cart;
+  if (product.hidden || !Number.isInteger(quantity) || quantity < 1 || product.stock < 1) return cart;
   const existing = cart.find((entry) => entry.productId === product.id);
   const nextQuantity = Math.min(product.stock, (existing?.quantity || 0) + quantity);
   return existing ? cart.map((entry) => entry.productId === product.id ? { ...entry, quantity: nextQuantity } : entry) : [...cart, { productId: product.id, quantity: nextQuantity }];
@@ -24,6 +25,7 @@ export function addCartItem(cart, product, quantity = 1) {
 
 export function checkoutError(items) {
   if (!items.length) return 'Selecciona al menos un producto para continuar.';
+  if (items.some((item) => item.hidden)) return 'Hay productos dados de baja. Quítalos del carrito para continuar.';
   if (new Set(items.map((item) => item.seller)).size > 1) return 'Selecciona productos de un mismo vendedor por compra.';
   if (items.some((item) => !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > item.stock)) return 'La cantidad seleccionada supera el stock disponible.';
   return '';
@@ -36,13 +38,24 @@ export function applyOffers(products, offers, date) {
   });
 }
 
+export function saveOffer(offers, offer) {
+  // Una oferta por producto: editar conserva el identificador y nunca crea productos.
+  const existing = offers.find((item) => item.id === offer.id) || offers.find((item) => item.productId === offer.productId);
+  const saved = { ...offer, id: existing?.id || offer.id };
+  return [saved, ...offers.filter((item) => item.id !== saved.id && item.productId !== saved.productId)];
+}
+
+export function setProductHidden(state, productId, hidden) {
+  return { ...state, products: state.products.map((product) => product.id === productId ? { ...product, hidden } : product) };
+}
+
 export function completePurchase(state, seller, details) {
   const items = cartItems(state.cart, state.products).filter((item) => item.seller === seller);
   const error = checkoutError(items);
   if (error) throw new Error(error);
   const totals = orderTotals(items, details.delivery ? details.shipping : 0);
   const id = String(details.id);
-  const order = { id, seller, items: items.map(({ id: productId, name, image, detailImage, price, quantity }) => ({ productId, name, image: detailImage || image, price, quantity })), date: details.date, step: 0, delivery: details.delivery, shipping: totals.shipping, total: totals.total, address: details.address, carrier: details.delivery ? 'Por asignar' : '', tracking: 'Por asignar', paymentMethod: details.method, lastFour: details.lastFour || '' };
+  const order = { id, seller, customer: details.customer, createdAt: details.createdAt, items: items.map(({ id: productId, name, image, detailImage, price, quantity }) => ({ productId, name, image: detailImage || image, price, quantity })), date: details.date, step: 0, delivery: details.delivery, shipping: totals.shipping, total: totals.total, address: details.address, carrier: details.delivery ? 'Por asignar' : '', tracking: 'Por asignar', paymentMethod: details.method, lastFour: details.lastFour || '' };
   return {
     ...state,
     products: state.products.map((product) => {

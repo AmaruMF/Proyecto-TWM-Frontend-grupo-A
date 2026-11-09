@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Alert, Box, Button, Chip, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import SectionHeader from '../../components/common/SectionHeader';
 import PagePanel from '../../components/common/PagePanel';
 import useMarketplace from '../../hooks/useMarketplace';
-import { currency, dateLabel, today } from '../../utils/commerce';
+import { currency, dateLabel, today, saveOffer } from '../../utils/commerce';
 import { navigate } from '../../hooks/useNavigation';
 export default function OfferPage() {
   const {
@@ -11,6 +11,8 @@ export default function OfferPage() {
     setData,
     notify
   } = useMarketplace();
+  const [editingId, setEditingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [productId, setProductId] = useState('');
   const [discount, setDiscount] = useState('');
   const [start, setStart] = useState(today());
@@ -18,32 +20,35 @@ export default function OfferPage() {
   const [error, setError] = useState('');
   const product = data.products.find(item => item.id === productId);
   const finalPrice = product ? Math.round((product.basePrice || product.price) * (1 - Number(discount) / 100)) : 0;
+  const reset = () => { setEditingId(null); setProductId(''); setDiscount(''); setStart(today()); setEnd(''); setError(''); };
+  const editOffer = offer => {
+    setEditingId(offer.id); setProductId(offer.productId); setDiscount(String(offer.discount)); setStart(offer.start); setEnd(offer.end); setError('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const submit = event => {
     event.preventDefault();
-    if (end < start) {
+    if (!product || product.hidden || !Number.isInteger(Number(discount)) || Number(discount) < 1 || Number(discount) > 99) { setError('Selecciona un producto activo y un descuento entero entre 1 y 99.'); return; }
+    if (!start || !end || end < start) {
       setError('La fecha de término debe ser igual o posterior al inicio.');
       return;
     }
     setData(current => ({
       ...current,
-      offers: [{
-        id: crypto.randomUUID(),
+      offers: saveOffer(current.offers, {
+        id: editingId || crypto.randomUUID(),
         productId,
         discount: Number(discount),
         start,
         end,
-        enabled: true
-      }, ...current.offers.filter(item => item.productId !== productId)]
+        enabled: editingId ? current.offers.find(item => item.id === editingId)?.enabled ?? true : true
+      })
     }));
-    setProductId('');
-    setDiscount('');
-    setEnd('');
-    setError('');
-    notify('Oferta publicada. El descuento se aplicará durante las fechas indicadas.');
+    reset();
+    notify('Oferta guardada. Se actualiza el producto existente sin duplicarlo.');
   };
   return <><SectionHeader title="Crear y gestionar ofertas" /><PagePanel component="form" onSubmit={submit} sx={{
       borderRadius: 3
-    }}><Stack spacing={3}><Typography component="h2" variant="h3">Seleccionar artículo</Typography><TextField select label="Producto" value={productId} onChange={event => setProductId(event.target.value)} required>{data.products.map(item => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>)}</TextField>{product && <Typography variant="body2">Categoría: {product.category} · Precio base: {currency(product.basePrice || product.price)}</Typography>}<Typography component="h2" variant="h3">Detalles de la oferta</Typography><Box sx={{
+    }}><Stack spacing={3}><Typography component="h2" variant="h3">Seleccionar artículo</Typography><TextField select label="Producto" disabled={Boolean(editingId)} value={productId} onChange={event => setProductId(event.target.value)} required>{data.products.filter(item => !item.hidden || item.id === productId).map(item => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>)}</TextField>{product && <Typography variant="body2">Categoría: {product.category} · Precio base: {currency(product.basePrice || product.price)}</Typography>}<Typography component="h2" variant="h3">Detalles de la oferta</Typography><Box sx={{
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
@@ -65,7 +70,7 @@ export default function OfferPage() {
               shrink: true
             },
             htmlInput: {
-              min: today()
+              min: editingId ? undefined : today()
             }
           }} /><TextField type="date" label="Fecha de término" value={end} onChange={event => setEnd(event.target.value)} required slotProps={{
             inputLabel: {
@@ -79,7 +84,7 @@ export default function OfferPage() {
           sm: 'row'
         }} sx={{
           gap: 2
-        }}><Button type="submit" variant="contained">Publicar oferta</Button><Button variant="outlined" onClick={() => navigate('/publicaciones')}>Cancelar</Button></Stack></Stack></PagePanel>
+        }}><Button type="submit" variant="contained">{editingId ? "Guardar cambios" : "Publicar oferta"}</Button><Button variant="outlined" onClick={() => editingId ? reset() : navigate('/publicaciones')}>Cancelar</Button></Stack></Stack></PagePanel>
     {data.offers.length > 0 && <><Typography component="h2" variant="h3" sx={{
         mt: 5,
         mb: 3
@@ -96,12 +101,13 @@ export default function OfferPage() {
               }}>{offer.discount}% de descuento · {dateLabel(offer.start)} al {dateLabel(offer.end)}</Typography><Chip size="small" label={!offer.enabled ? 'Pausada' : offer.end < today() ? 'Finalizada' : offer.start > today() ? 'Programada' : 'Activa'} sx={{
                 mt: 1,
                 bgcolor: 'background.paper'
-              }} /></Box><Button variant="outlined" onClick={() => setData(current => ({
+              }} /></Box><Stack direction={{ xs: "column", sm: "row" }} spacing={1}><Button variant="outlined" onClick={() => editOffer(offer)}>Editar oferta</Button><Button color="error" variant="outlined" onClick={() => setDeleteTarget(offer)}>Eliminar oferta</Button><Button variant="outlined" onClick={() => setData(current => ({
               ...current,
               offers: current.offers.map(item => item.id === offer.id ? {
                 ...item,
                 enabled: !item.enabled
               } : item)
-            }))}>{offer.enabled ? 'Pausar oferta' : 'Activar oferta'}</Button></Stack></PagePanel>)}</Stack></>}
+            }))}>{offer.enabled ? 'Pausar oferta' : 'Activar oferta'}</Button></Stack></Stack></PagePanel>)}</Stack></>}
+    <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth><DialogTitle>¿Eliminar oferta?</DialogTitle><DialogContent>El producto seguirá publicado con su precio sin esta oferta. Las ventas anteriores se conservan.</DialogContent><DialogActions><Button onClick={() => setDeleteTarget(null)}>Cancelar</Button><Button color="error" onClick={() => { setData(current => ({ ...current, offers: current.offers.filter(item => item.id !== deleteTarget.id) })); if (editingId === deleteTarget.id) reset(); setDeleteTarget(null); notify('Oferta eliminada.'); }}>Eliminar oferta</Button></DialogActions></Dialog>
   </>;
 }

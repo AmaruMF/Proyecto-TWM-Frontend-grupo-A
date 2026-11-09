@@ -9,12 +9,15 @@ export default function AuthPage({
   onLogin
 }) {
   const {
-    login
+    login,
+    data
   } = useMarketplace();
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
-  const enter = (role = 'client') => {
-    login(role, remember);
+  const enter = (role) => {
+    const enteredRole = login(role, remember);
+    if (!enteredRole) return;
+    if (enteredRole === 'seller' && data.profile.companyRegistrationPending) { navigate('/registro-empresa'); return; }
     if (onLogin) onLogin();else navigate('/inicio');
   };
   const submit = event => {
@@ -115,6 +118,7 @@ export default function AuthPage({
           }}>¿Aún no tienes una cuenta? <Link component="button" onClick={() => navigate('/registro')} sx={{
               fontWeight: 800
             }}>Crear cuenta</Link></Typography>
+          <Button fullWidth sx={{ mt: 1 }} onClick={() => navigate('/registro/vendedor')}>Crear cuenta de vendedor</Button>
           <Divider sx={{
             my: 3
           }}>Cuentas de ejemplo</Divider><Stack direction={{

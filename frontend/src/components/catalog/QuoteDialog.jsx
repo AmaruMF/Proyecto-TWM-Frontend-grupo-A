@@ -11,7 +11,7 @@ export default function QuoteDialog({ service, onClose }) {
   const submit = (event) => {
     event.preventDefault();
     if (!session) { onClose(); navigate('/acceso'); return; }
-    setData((current) => ({ ...current, quotes: [{ id: Date.now().toString(), serviceId: service.id, serviceName: service.name, seller: service.seller, customer: `${data.profile.name} ${data.profile.lastName}`, date, detail: detail.trim(), step: 0 }, ...current.quotes] }));
+    setData((current) => ({ ...current, quotes: [{ id: Date.now().toString(), serviceId: service.id, serviceName: service.name, seller: service.seller, customer: `${data.profile.name} ${data.profile.lastName}`, date, sentAt: new Date().toISOString(), detail: detail.trim(), step: 0 }, ...current.quotes] }));
     notify('Solicitud de cotización enviada.');
     onClose(); navigate('/cotizaciones');
   };

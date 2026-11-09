@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, Box, Button, FormControlLabel, Checkbox, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import SectionHeader from '../../components/common/SectionHeader';
+import EmptyState from '../../components/common/EmptyState';
 import PagePanel from '../../components/common/PagePanel';
 import useMarketplace from '../../hooks/useMarketplace';
 import { navigate } from '../../hooks/useNavigation';
@@ -55,10 +56,14 @@ export default function PublicationEditorPage({
   };
   const submit = event => {
     event.preventDefault();
+    if (!values.name.trim() || !values.category.trim() || (service ? !values.duration.trim() : !values.sku.trim())) { setError('Completa los campos obligatorios con texto válido.'); return; }
     const price = Number(values.price);
+    if (!service && (!Number.isInteger(price) || price < 1 || !Number.isInteger(Number(values.stock)) || Number(values.stock) < 0)) { setError('El precio y el stock deben ser números enteros válidos.'); return; }
     const originalPrice = Math.max(existing?.originalPrice || price, price);
+    const publication = { ...values };
+    delete publication.basePrice;
     const item = {
-      ...values,
+      ...publication,
       id: id || crypto.randomUUID(),
       seller: existing?.seller || data.company?.name || `${data.profile.name} ${data.profile.lastName}`,
       brand: existing?.brand || data.company?.name || 'Multiplaza',
@@ -76,6 +81,7 @@ export default function PublicationEditorPage({
     notify(`${service ? 'Servicio' : 'Producto'} guardado.`);
     navigate(service ? '/servicios-vendedor' : '/inventario');
   };
+  if (id && !existing) return <EmptyState title="Publicación no encontrada" actionLabel="Volver a publicaciones" onAction={() => navigate('/publicaciones')} />;
   return <><SectionHeader title={`${existing ? 'Editar' : 'Agregar'} ${service ? 'servicio' : 'producto'}`} /><Box component="form" onSubmit={submit}><PagePanel sx={{
         borderRadius: 3
       }}><Stack spacing={3}>

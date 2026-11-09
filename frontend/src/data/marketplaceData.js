@@ -2,7 +2,7 @@ import { products, services } from './catalog';
 
 export const initialMarketplace = {
   version: 1,
-  profile: { name: 'Fernando', lastName: 'Martínez', run: '12.345.678-9', email: 'fernando.martinez@gmail.com', phone: '+56 9 1234 5678', location: 'Osorno, Chile' },
+  profile: { name: 'Fernando', lastName: 'Martínez', run: '12.345.678-5', birthday: '1995-05-15', email: 'fernando.martinez@gmail.com', phone: '+56 9 1234 5678', location: 'Osorno, Chile' },
   products,
   services,
   cart: [{ productId: 'hp-victus', quantity: 1 }, { productId: 'air-jordan', quantity: 2 }],

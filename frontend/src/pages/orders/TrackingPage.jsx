@@ -21,6 +21,7 @@ export default function TrackingPage({
   const item = order.items[0];
   const buyAgain = () => {
     const product = data.products.find(entry => entry.id === item.productId);
+    if (product?.hidden) { notify('Este producto está dado de baja.', 'warning'); return; }
     if (!product?.stock) {
       notify('Este producto no tiene stock disponible.', 'warning');
       return;
@@ -47,13 +48,13 @@ export default function TrackingPage({
         sm: '220px minmax(0, 1fr)'
       },
       gap: 4
-    }}><Box component="img" src={item.image} alt={item.name} sx={{
+    }}>{(item.image) ? <Box component="img" src={item.image} alt={item.name} sx={{
         width: '100%',
         maxHeight: 240,
         objectFit: 'contain',
         bgcolor: 'background.paper',
         borderRadius: 1
-      }} /><Box><Typography component="h2" variant="h3">{item.name}</Typography><Typography sx={{
+      }} /> : <Box sx={{ minHeight: 90, display: 'grid', placeItems: 'center', bgcolor: 'background.paper', borderRadius: 1 }}><Typography variant="body2">Sin imagen</Typography></Box>}<Box><Typography component="h2" variant="h3">{item.name}</Typography><Typography sx={{
           fontSize: 26,
           fontWeight: 900,
           my: 2

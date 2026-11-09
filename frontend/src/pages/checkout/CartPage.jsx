@@ -35,7 +35,7 @@ export default function CartPage() {
             alignItems: 'start',
             gap: 2
           }}>
-        <Box component="img" src={item.detailImage || item.image} alt={item.name} sx={{
+        {(item.detailImage || item.image) ? <Box component="img" src={item.detailImage || item.image} alt={item.name} sx={{
               width: '100%',
               height: {
                 xs: 90,
@@ -44,7 +44,7 @@ export default function CartPage() {
               objectFit: 'contain',
               bgcolor: 'background.paper',
               borderRadius: 1
-            }} />
+            }} /> : <Box sx={{ minHeight: 90, display: 'grid', placeItems: 'center', bgcolor: 'background.paper', borderRadius: 1 }}><Typography variant="body2">Sin imagen</Typography></Box>}
         <Box><Button onClick={() => navigate(`/producto/${item.id}`)} sx={{
                 fontWeight: 800,
                 p: 0,
@@ -53,13 +53,13 @@ export default function CartPage() {
                 justifyContent: 'flex-start'
               }}>{item.name}</Button><Typography variant="body2" sx={{
                 mt: 1
-              }}>Vendedor: {item.seller} · Stock: {item.stock}</Typography>{item.quantity > item.stock && <Typography variant="body2" sx={{
+              }}>Vendedor: {item.seller} · {item.hidden ? "Producto dado de baja: quítalo para continuar" : `Stock: ${item.stock}`}</Typography>{item.quantity > item.stock && <Typography variant="body2" sx={{
                 mt: 1,
                 fontWeight: 800
               }}>Ajusta la cantidad al stock disponible.</Typography>}</Box>
         <TextField select label="Cantidad" value={item.quantity} onChange={event => updateQuantity(item.id, Number(event.target.value))} sx={{
               width: 96
-            }} disabled={!item.stock}>{Array.from({
+            }} disabled={!item.stock || item.hidden}>{Array.from({
                 length: Math.max(item.quantity, Math.min(item.stock, 20))
               }, (_, index) => index + 1).map(value => <MenuItem key={value} value={value} disabled={value > item.stock}>{value}</MenuItem>)}</TextField>
         <Typography sx={{

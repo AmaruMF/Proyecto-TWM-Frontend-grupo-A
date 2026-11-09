@@ -28,12 +28,15 @@ const TransactionsPage = lazy(() => import('./pages/orders/TransactionsPage'));
 const InventoryPage = lazy(() => import('./pages/seller/InventoryPage'));
 const PublicationEditorPage = lazy(() => import('./pages/seller/PublicationEditorPage'));
 const PublicationsPage = lazy(() => import('./pages/seller/PublicationsPage'));
+const SalesPage = lazy(() => import('./pages/seller/SalesPage'));
 const OfferPage = lazy(() => import('./pages/seller/OfferPage'));
 
-const accountViews = new Set(['cuenta', 'carrito', 'pedidos', 'devoluciones', 'transacciones', 'cotizaciones', 'deseos', 'mensajes', 'seguimiento', 'postventa', 'inventario', 'publicaciones', 'oferta', 'gestion', 'servicios-vendedor', 'nuevo-producto', 'nuevo-servicio', 'editar-producto', 'editar-servicio', 'clientes']);
+const accountViews = new Set(['ventas', 'cuenta', 'carrito', 'pedidos', 'devoluciones', 'transacciones', 'cotizaciones', 'deseos', 'mensajes', 'seguimiento', 'postventa', 'inventario', 'publicaciones', 'oferta', 'gestion', 'servicios-vendedor', 'nuevo-producto', 'nuevo-servicio', 'editar-producto', 'editar-servicio', 'clientes']);
 const publicViews = new Set(['', 'inicio', 'productos', 'servicios', 'ofertas', 'buscar', 'producto', 'servicio', 'registro']);
+const sellerViews = new Set(['ventas', 'inventario', 'publicaciones', 'oferta', 'gestion', 'servicios-vendedor', 'nuevo-producto', 'nuevo-servicio', 'editar-producto', 'editar-servicio', 'clientes']);
 
 function AppContent({ view, id }) {
+  const { data, setData } = useMarketplace();
   switch (view) {
     case '': case 'inicio': return <HomePage />;
     case 'productos': return <CatalogPage key={view} />;
@@ -45,7 +48,7 @@ function AppContent({ view, id }) {
     }
     case 'producto': return <ProductDetailPage key={id} id={id} />;
     case 'servicio': return <ProductDetailPage key={id} id={id} service />;
-    case 'registro': return <RegistrationPage key="personal" />;
+    case 'registro': return <RegistrationPage key={`personal-${id || "client"}`} seller={id === 'vendedor'} />;
     case 'registro-empresa': return <RegistrationPage key="company" company />;
     case 'cuenta': return <ProfilePage />;
     case 'carrito': return <CartPage />;
@@ -60,6 +63,7 @@ function AppContent({ view, id }) {
     case 'gestion': return <QuotesPage management />;
     case 'deseos': return <WishlistPage />;
     case 'mensajes': return <MessagesPage id={id} />;
+    case 'ventas': return <SalesPage />;
     case 'inventario': return <InventoryPage />;
     case 'nuevo-producto': return <PublicationEditorPage key="new-product" />;
     case 'editar-producto': return <PublicationEditorPage key={id} id={id} />;
@@ -68,15 +72,17 @@ function AppContent({ view, id }) {
     case 'publicaciones': return <PublicationsPage />;
     case 'servicios-vendedor': return <PublicationsPage servicesOnly />;
     case 'oferta': return <OfferPage />;
-    case 'clientes': return <CrudModule title="Gestión de clientes" description="Administra la información de tus clientes." entityName="cliente" fields={clientFields} initialRows={initialClients} />;
+    case 'clientes': return <CrudModule title="Gestión de clientes" description="Administra la información de tus clientes." entityName="cliente" fields={clientFields} initialRows={initialClients} rows={data.clients || initialClients} onRowsChange={update => setData(current => ({ ...current, clients: typeof update === 'function' ? update(current.clients || initialClients) : update }))} />;
     default: return <EmptyState title="Página no encontrada" actionLabel="Volver al inicio" onAction={() => { window.location.hash = '/'; }} />;
   }
 }
 
 function MarketplaceApp() {
   const { view, id, navigate } = useNavigation();
-  const { session } = useMarketplace();
+  const { session, data } = useMarketplace();
   if (view === 'acceso' || (!session && !publicViews.has(view))) return <AuthPage onLogin={() => view === 'acceso' ? navigate('/inicio') : undefined} />;
+  if (session?.role === 'seller' && data.profile.companyRegistrationPending && (sellerViews.has(view) || view === 'inicio' || !view)) return <AppShell activeView={view || 'inicio'}><RegistrationPage key="pending-company" company /></AppShell>;
+  if (sellerViews.has(view) && session?.role !== 'seller') return <AppShell activeView="cuenta" accountLayout><EmptyState title="Esta sección requiere una cuenta de vendedor mayor de edad" actionLabel="Ir a mi cuenta" onAction={() => navigate('/cuenta')} /></AppShell>;
   return <AppShell activeView={view || 'inicio'} accountLayout={accountViews.has(view)}><AppContent view={view} id={id} /></AppShell>;
 }
 

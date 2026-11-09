@@ -3,7 +3,7 @@ import SectionHeader from '../../components/common/SectionHeader';
 import PagePanel from '../../components/common/PagePanel';
 import useMarketplace from '../../hooks/useMarketplace';
 import { navigate } from '../../hooks/useNavigation';
-import { currency } from '../../utils/commerce';
+import { currency, setProductHidden } from '../../utils/commerce';
 export default function PublicationsPage({
   servicesOnly = false
 }) {
@@ -20,16 +20,16 @@ export default function PublicationsPage({
     isService: true
   }))];
   const toggleVisibility = item => {
-    setData(current => ({
+    setData(current => item.isService ? ({
       ...current,
       [item.isService ? 'services' : 'products']: current[item.isService ? 'services' : 'products'].map(record => record.id === item.id ? {
         ...record,
         hidden: !record.hidden
       } : record)
-    }));
-    notify(item.hidden ? 'Publicación visible en el catálogo.' : 'Publicación pausada.');
+    }) : setProductHidden(current, item.id, !item.hidden));
+    notify(item.hidden ? 'Publicación visible en el catálogo.' : 'Publicación dada de baja. Las ventas anteriores se conservan.');
   };
-  return <><SectionHeader title={servicesOnly ? 'Mis servicios' : 'Gestionar publicaciones'} description="Edita los detalles y controla la visibilidad de tus publicaciones." actionLabel={servicesOnly ? '＋ Agregar servicio' : '＋ Agregar producto'} onAction={() => navigate(servicesOnly ? '/nuevo-servicio' : '/nuevo-producto')} extraActions={!servicesOnly && <Button variant="outlined" onClick={() => navigate('/nuevo-servicio')}>Agregar servicio</Button>} />
+  return <><SectionHeader title={servicesOnly ? 'Mis servicios' : 'Gestionar publicaciones'} description="Edita tus publicaciones o dalas de baja. El historial de ventas se conserva." actionLabel={servicesOnly ? '＋ Agregar servicio' : '＋ Agregar producto'} onAction={() => navigate(servicesOnly ? '/nuevo-servicio' : '/nuevo-producto')} extraActions={!servicesOnly && <Button variant="outlined" onClick={() => navigate('/nuevo-servicio')}>Agregar servicio</Button>} />
     <Stack spacing={2}>{publications.map(item => <PagePanel key={item.id} sx={{
         p: 2.5
       }}><Stack direction={{
@@ -53,11 +53,11 @@ export default function PublicationsPage({
               fontWeight: 800
             }}>{item.name}</Typography><Typography variant="body2" sx={{
               mt: 0.5
-            }}>{item.isService ? 'Servicio · Cotización personalizada' : `${currency(item.price)} · Stock: ${item.stock}`}</Typography><Chip label={item.hidden ? 'Pausada' : 'Publicada'} size="small" sx={{
+            }}>{item.isService ? 'Servicio · Cotización personalizada' : `${currency(item.price)} · Stock: ${item.stock}`}</Typography><Chip label={item.hidden ? 'Dada de baja' : 'Publicada'} size="small" sx={{
               mt: 1,
               bgcolor: 'background.paper'
             }} /></Box><Stack direction="row" sx={{
             gap: 1
-          }}><Button variant="outlined" onClick={() => navigate(`/editar-${item.isService ? 'servicio' : 'producto'}/${item.id}`)}>Editar</Button><Button variant="contained" onClick={() => toggleVisibility(item)}>{item.hidden ? 'Publicar' : 'Pausar'}</Button></Stack></Stack></PagePanel>)}</Stack>
+          }}><Button variant="outlined" onClick={() => navigate(`/editar-${item.isService ? 'servicio' : 'producto'}/${item.id}`)}>Editar</Button><Button variant="contained" onClick={() => toggleVisibility(item)}>{item.hidden ? 'Reactivar' : 'Dar de baja'}</Button></Stack></Stack></PagePanel>)}</Stack>
   </>;
 }

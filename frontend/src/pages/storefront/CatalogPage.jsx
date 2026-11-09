@@ -45,7 +45,7 @@ export default function CatalogPage({
       mt: 5
     }}><Typography component="h2" variant="h3" sx={{
         mb: 3
-      }}>Servicios relacionados</Typography><CatalogGrid items={data.services.filter(item => `${item.name} ${item.category}`.toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(normalizedSearch))} service onQuote={setQuote} /></Box>}
+      }}>Servicios relacionados</Typography><CatalogGrid items={data.services.filter(item => !item.hidden && `${item.name} ${item.category}`.toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(normalizedSearch))} service onQuote={setQuote} /></Box>}
     {quote && <QuoteDialog service={quote} onClose={() => setQuote(null)} />}
   </>;
 }

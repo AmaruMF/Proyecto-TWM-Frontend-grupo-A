@@ -3,6 +3,9 @@ import { Alert, Snackbar } from '@mui/material';
 import MarketplaceContext from './MarketplaceContext';
 import { initialMarketplace } from '../data/marketplaceData';
 import { addCartItem, applyOffers, cartItems, checkoutError, completePurchase, today } from '../utils/commerce';
+import { findConversation } from '../utils/messages';
+import { isAdult } from '../utils/validation';
+import ChatDialog from '../components/messages/ChatDialog';
 import { navigate } from '../hooks/useNavigation';
 
 function loadData() {
@@ -13,13 +16,14 @@ function loadData() {
 }
 
 function loadSession() {
-  try { return JSON.parse(sessionStorage.getItem('multiplaza.session') || localStorage.getItem('multiplaza.remembered-session')) || null; } catch { return null; }
+  try { const saved = JSON.parse(sessionStorage.getItem('multiplaza.session') || localStorage.getItem('multiplaza.remembered-session')); return saved?.role === 'seller' && !isAdult(loadData().profile.birthday, today()) ? { ...saved, role: 'client' } : saved || null; } catch { return null; }
 }
 
 export default function MarketplaceProvider({ children }) {
   const [data, setData] = useState(loadData);
   const [session, setSession] = useState(loadSession);
   const [notice, setNotice] = useState(null);
+  const [chatId, setChatId] = useState(null);
   const [checkout, setCheckout] = useState(() => {
     const defaults = { seller: '', delivery: true, shipping: 4990, region: 'Los Lagos', commune: 'Osorno', city: 'Osorno', street: 'Av. República', number: '1234', method: 'Tarjeta' };
     try { return { ...defaults, ...JSON.parse(sessionStorage.getItem('multiplaza.checkout')) }; } catch { return defaults; }
@@ -37,23 +41,35 @@ export default function MarketplaceProvider({ children }) {
   useEffect(() => { try { sessionStorage.setItem('multiplaza.checkout', JSON.stringify(checkout)); } catch { /* Checkout remains available in memory. */ } }, [checkout]);
 
   const notify = (message, severity = 'success') => setNotice({ message, severity });
-  const login = (role = 'client', remember = false) => setSession({ role, remember });
-  const logout = () => { setSession(null); navigate('/'); };
-  const switchRole = () => { setSession((current) => ({ ...current, role: current?.role === 'seller' ? 'client' : 'seller' })); navigate('/inicio'); };
+  const login = (role = data.profile.accountType || (data.company ? 'seller' : 'client'), remember = false) => {
+    if (role === 'seller' && !isAdult(data.profile.birthday, today())) { notify('Para vender debes tener 18 años cumplidos. Revisa tu fecha de nacimiento en Mi cuenta.', 'warning'); return false; }
+    setSession({ role, remember });
+    return role;
+  };
+  const registerProfile = (profile, business) => {
+    if (business && !isAdult(profile.birthday, today())) { notify('Para registrarte como vendedor debes tener 18 años cumplidos.', 'warning'); return false; }
+    const role = business ? 'seller' : 'client';
+    setData(current => ({ ...current, company: null, profile: { ...current.profile, ...profile, accountType: role, companyRegistrationPending: business } }));
+    setSession({ role, remember: false });
+    return true;
+  };
+  const logout = () => { setChatId(null); setSession(null); navigate('/'); };
+  const switchRole = () => { setChatId(null); if (login(session?.role === 'seller' ? 'client' : 'seller', session?.remember)) navigate('/inicio'); };
   const addToCart = (productId, quantity = 1) => {
     const product = data.products.find((item) => item.id === productId);
+    if (product?.hidden) { notify('Este producto está dado de baja.', 'warning'); return; }
     if (!product?.stock) { notify('Este producto no tiene stock disponible.', 'warning'); return; }
     setData((current) => ({ ...current, cart: addCartItem(current.cart, product, quantity) }));
     notify('Producto agregado al carrito.');
   };
   const updateQuantity = (productId, quantity) => {
     const product = data.products.find((item) => item.id === productId);
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > product.stock) return;
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > product?.stock || !product || product.hidden) return;
     setData((current) => ({ ...current, cart: current.cart.map((item) => item.productId === productId ? { ...item, quantity } : item) }));
   };
   const removeFromCart = (productId) => setData((current) => ({ ...current, cart: current.cart.filter((item) => item.productId !== productId) }));
   const toggleFavorite = (productId, listId = 'favorites') => {
-    setData((current) => ({ ...current, wishlists: current.wishlists.map((list) => list.id === listId ? { ...list, productIds: list.productIds.includes(productId) ? list.productIds.filter((id) => id !== productId) : [...list.productIds, productId] } : list) }));
+    setData((current) => ({ ...current, wishlists: (current.wishlists.some((list) => list.id === listId) ? current.wishlists : [...current.wishlists, { id: listId, name: 'Mis favoritos', productIds: [] }]).map((list) => list.id === listId ? { ...list, productIds: list.productIds.includes(productId) ? list.productIds.filter((id) => id !== productId) : [...list.productIds, productId] } : list) }));
   };
   const startCheckout = (seller) => {
     const items = cartItems(data.cart, data.products).filter((item) => item.seller === seller);
@@ -66,7 +82,7 @@ export default function MarketplaceProvider({ children }) {
     const items = cartItems(data.cart, data.products).filter((item) => item.seller === checkout.seller);
     const error = checkoutError(items);
     if (error) { notify(error, 'warning'); return false; }
-    const details = { ...checkout, ...payment, id: Date.now().toString(), date: today(), address: checkout.delivery ? `${checkout.street} ${checkout.number}, ${checkout.commune}, ${checkout.region}` : `Retiro en ${checkout.seller}` };
+    const details = { ...checkout, ...payment, id: Date.now().toString(), date: today(), createdAt: new Date().toISOString(), customer: `${data.profile.name} ${data.profile.lastName}`,  address: checkout.delivery ? `${checkout.street} ${checkout.number}, ${checkout.commune}, ${checkout.region}` : `Retiro en ${checkout.seller}` };
     setData((current) => {
       const result = completePurchase({ ...current, products: applyOffers(current.products, current.offers, today()) }, checkout.seller, details);
       return { ...result, products: current.products.map((product) => ({ ...product, stock: result.products.find((item) => item.id === product.id).stock })) };
@@ -75,16 +91,19 @@ export default function MarketplaceProvider({ children }) {
     navigate('/pedidos');
     return true;
   };
-  const openChat = (seller, context = 'Consulta de producto') => {
-    const existing = data.messages.find((thread) => thread.seller === seller && thread.context === context);
+  const openConversation = (id) => setChatId(id);
+  const openChat = (seller, context = 'Consulta de producto', customer = `${data.profile.name} ${data.profile.lastName || ''}`.trim()) => {
+    const existing = findConversation(data.messages, seller, context, customer);
     const id = existing?.id || crypto.randomUUID();
-    if (!existing) setData((current) => ({ ...current, messages: [...current.messages, { id, seller, context, messages: [{ id: crypto.randomUUID(), incoming: true, text: '¡Hola! Puedes dejar tu consulta aquí.', time: new Intl.DateTimeFormat('es-CL', { hour: '2-digit', minute: '2-digit' }).format(new Date()) }] }] }));
-    navigate(`/mensajes/${id}`);
+    if (!existing) setData((current) => ({ ...current, messages: [...current.messages, { id, seller, customer, context, messages: [{ id: crypto.randomUUID(), senderRole: 'seller', senderName: seller, system: true, incoming: true, text: '¡Hola! Puedes dejar tu consulta aquí.', sentAt: new Date().toISOString(), time: new Intl.DateTimeFormat('es-CL', { hour: '2-digit', minute: '2-digit' }).format(new Date()) }] }] }));
+    if (existing && !existing.customer) setData(current => ({ ...current, messages: current.messages.map(thread => thread.id === id ? { ...thread, customer } : thread) }));
+    setChatId(id);
   };
 
   const visibleData = { ...data, products: applyOffers(data.products, data.offers, today()) };
-  return <MarketplaceContext.Provider value={{ data: visibleData, setData, session, login, logout, switchRole, notify, checkout, setCheckout, addToCart, updateQuantity, removeFromCart, toggleFavorite, startCheckout, purchase, openChat }}>
+  return <MarketplaceContext.Provider value={{ data: visibleData, setData, session, login, registerProfile, logout, switchRole, notify, checkout, setCheckout, addToCart, updateQuantity, removeFromCart, toggleFavorite, startCheckout, purchase, openChat, openConversation }}>
     {children}
+    {session && chatId && <ChatDialog key={chatId} id={chatId} onClose={() => setChatId(null)} />}
     <Snackbar open={Boolean(notice)} autoHideDuration={4500} onClose={() => setNotice(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
       <Alert severity={notice?.severity || 'success'} onClose={() => setNotice(null)} variant="filled" sx={{ width: '100%' }}>{notice?.message}</Alert>
     </Snackbar>

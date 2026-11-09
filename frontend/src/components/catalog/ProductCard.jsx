@@ -34,7 +34,7 @@ export default function ProductCard({
       borderColor: 'primary.main'
     }
   }}>
-    <Chip label={product.category} size="small" sx={{
+    <Chip label={product.hidden ? 'Producto dado de baja' : product.category} size="small" sx={{
       alignSelf: 'flex-start',
       maxWidth: '100%',
       mb: 1,

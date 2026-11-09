@@ -36,7 +36,7 @@ export default function HomePage() {
   } = useMarketplace();
   const [quote, setQuote] = useState(null);
   const seller = session?.role === 'seller';
-  const displayProducts = data.products.filter(product => !['mouse', 'keyboard'].includes(product.id));
+  const displayProducts = data.products.filter(product => !product.hidden && !['mouse', 'keyboard'].includes(product.id));
   if (!session) return <>
     <PagePanel sx={{
       display: 'grid',
@@ -98,6 +98,7 @@ export default function HomePage() {
     }}><Typography component="h2" variant="h3">Ofertas destacadas</Typography><Button onClick={() => navigate('/ofertas')}>Ver todo</Button></Stack>
     <Stack spacing={2}>{['air-jordan', 'iphone'].map(id => {
         const product = data.products.find(item => item.id === id);
+        if (!product || product.hidden) return null;
         return <ButtonBase key={id} onClick={() => navigate(`/producto/${id}`)} sx={{
           p: 2,
           gap: {
@@ -177,7 +178,7 @@ export default function HomePage() {
         },
         gap: 2,
         my: 3
-      }}>{[['Ventas registradas', currency(data.transactions.filter(item => item.status === 'Completada').reduce((total, item) => total + item.total, 0)), 'Historial de transacciones'], ['Publicaciones activas', data.products.filter(item => !item.hidden).length, `${data.products.filter(item => item.stock < 3).length} con stock bajo`], ['Cotizaciones pendientes', data.quotes.filter(item => item.step === 0).length, 'Por responder'], ['Conversaciones', data.messages.length, 'Atención al cliente']].map(([label, value, helper]) => <Box key={label} sx={{
+      }}>{[['Ventas registradas', currency(data.orders.reduce((total, item) => total + item.total, 0)), 'Historial de ventas'], ['Publicaciones activas', data.products.filter(item => !item.hidden).length, `${data.products.filter(item => item.stock < 3).length} con stock bajo`], ['Cotizaciones pendientes', data.quotes.filter(item => item.step === 0).length, 'Por responder'], ['Conversaciones', data.messages.length, 'Atención al cliente']].map(([label, value, helper]) => <Box key={label} sx={{
           bgcolor: 'rgba(255,248,240,0.35)',
           p: 2,
           borderRadius: 1
@@ -202,7 +203,7 @@ export default function HomePage() {
           lg: 'repeat(4, 1fr)'
         },
         gap: 2
-      }}>{[['product', 'Agregar producto o servicio', 'Publica una nueva oferta en pocos pasos.', '/nuevo-producto'], ['publications', 'Gestionar publicaciones', 'Edita precios, stock, visibilidad y detalles.', '/publicaciones'], ['offer', 'Crear y gestionar ofertas', 'Activa descuentos para impulsar tus ventas.', '/oferta'], ['quote', 'Revisar cotizaciones', 'Responde solicitudes y confirma condiciones.', '/gestion']].map(([icon, title, helper, path], index) => <ButtonBase key={title} onClick={() => navigate(path)} sx={{
+      }}>{[['product', 'Agregar producto o servicio', 'Publica una nueva oferta en pocos pasos.', '/nuevo-producto'], ['publications', 'Gestionar publicaciones', 'Edita precios, stock, visibilidad y detalles.', '/publicaciones'], ['offer', 'Crear y gestionar ofertas', 'Activa descuentos para impulsar tus ventas.', '/oferta'], ['orders', 'Historial de ventas', 'Consulta las ventas y sus productos originales.', '/ventas'], ['quote', 'Revisar cotizaciones', 'Responde solicitudes y confirma condiciones.', '/gestion']].map(([icon, title, helper, path], index) => <ButtonBase key={title} onClick={() => navigate(path)} sx={{
           display: 'flex',
           flexDirection: 'column',
           textAlign: 'left',
@@ -235,7 +236,7 @@ export default function HomePage() {
         sm: '1fr 1fr'
       },
       gap: 2
-    }}>{[['orders', `${data.orders.length} pedidos recientes`, 'Revisa el estado de tus compras.', 'Ver actividad', '/pedidos'], ['heart', `${data.wishlists[0].productIds.length} productos guardados`, 'Vuelve a encontrar tus favoritos.', 'Revisar favoritos', '/deseos']].map(([icon, title, helper, label, path]) => <PagePanel key={path} sx={{
+    }}>{[['orders', `${data.orders.length} pedidos recientes`, 'Revisa el estado de tus compras.', 'Ver actividad', '/pedidos'], ['heart', `${(data.wishlists.find(list => list.id === 'favorites')?.productIds.length || 0)} productos guardados`, 'Vuelve a encontrar tus favoritos.', 'Revisar favoritos', '/deseos']].map(([icon, title, helper, label, path]) => <PagePanel key={path} sx={{
         p: 2.5
       }}><Stack direction="row" sx={{
           gap: 2,
@@ -246,7 +247,7 @@ export default function HomePage() {
           mt: 2
         }}>{label}</Button></PagePanel>)}</Box>}
     <CatalogSection title="¡Las mejores ofertas para ti en productos!" items={seller ? displayProducts.slice(8, 12) : displayProducts.slice(0, 12)} />
-    <CatalogSection title="¡Contrata servicios de calidad aquí!" items={seller ? data.services.slice(4) : data.services} service onQuote={setQuote} />
+    <CatalogSection title="¡Contrata servicios de calidad aquí!" items={seller ? data.services.filter(item => !item.hidden).slice(4) : data.services.filter(item => !item.hidden)} service onQuote={setQuote} />
     {quote && <QuoteDialog service={quote} onClose={() => setQuote(null)} />}
   </>;
 }
