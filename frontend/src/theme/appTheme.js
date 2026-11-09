@@ -1,0 +1,162 @@
+import { createTheme } from '@mui/material/styles';
+
+const appTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#FF8400',
+      dark: '#D66E00',
+      light: '#F9DFC6',
+      contrastText: '#0B0829',
+    },
+    secondary: {
+      main: '#8FA0D8',
+      contrastText: '#0B0829',
+    },
+    background: {
+      default: '#F9DFC6',
+      paper: '#FFF8F0',
+    },
+    text: {
+      primary: '#0B0829',
+      secondary: '#49445F',
+    },
+    divider: 'rgba(11, 8, 41, 0.16)',
+    success: {
+      main: '#8FA0D8',
+      contrastText: '#0B0829',
+    },
+    warning: {
+      main: '#FF8400',
+      contrastText: '#0B0829',
+    },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  typography: {
+    fontFamily: ['Inter', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'].join(','),
+    h1: {
+      fontSize: '2.6rem',
+      fontWeight: 800,
+      lineHeight: 1.08,
+    },
+    h2: {
+      fontSize: '1.9rem',
+      fontWeight: 800,
+      lineHeight: 1.15,
+    },
+    h3: {
+      fontSize: '1.35rem',
+      fontWeight: 700,
+    },
+    button: {
+      fontWeight: 700,
+      textTransform: 'none',
+    },
+  },
+  components: {
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none', fontWeight: 800, color: '#0B0829',
+          '&.Mui-selected': { backgroundColor: '#FF8400', color: '#0B0829' },
+          '&.Mui-selected:hover': { backgroundColor: '#D66E00' },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          minHeight: 42,
+          boxShadow: 'none',
+          '&.MuiButton-colorPrimary:not(.MuiButton-contained)': {
+            color: '#0B0829',
+          },
+        },
+        contained: {
+          '&:hover': {
+            boxShadow: '0 12px 24px rgba(11, 8, 41, 0.18)',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          borderColor: 'rgba(11, 8, 41, 0.15)',
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: { '&.Mui-selected': { color: '#0B0829' } },
+      },
+    },
+    MuiLink: {
+      styleOverrides: {
+        root: { color: '#0B0829', textDecorationColor: '#FF8400' },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: { '&.Mui-focused': { color: '#0B0829' } },
+      },
+    },
+    MuiCheckbox: {
+      styleOverrides: {
+        root: {
+          color: '#8FA0D8',
+          '&.Mui-checked': {
+            color: '#FF8400',
+          },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#FFF8F0',
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#FF8400',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#FF8400',
+          },
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiInputLabel-root': { position: 'static', transform: 'none', maxWidth: '100%', whiteSpace: 'normal', marginBottom: 6, fontSize: 14, fontWeight: 600 },
+          '& .MuiOutlinedInput-notchedOutline legend': { display: 'none' },
+          '& .MuiOutlinedInput-notchedOutline': { top: 0 },
+        },
+      },
+      defaultProps: {
+        size: 'small',
+        slotProps: { inputLabel: { shrink: true } },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        head: {
+          color: '#0B0829',
+          fontWeight: 700,
+          backgroundColor: '#FF8400',
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#FFF8F0',
+        },
+      },
+    },
+  },
+});
+
+export default appTheme;
