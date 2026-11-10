@@ -6,24 +6,28 @@ const appTheme = createTheme({
     primary: {
       main: '#FF8400',
       dark: '#D66E00',
-      light: '#F9DFC6',
+      light: '#FFF8F0',
       contrastText: '#0B0829',
     },
     secondary: {
-      main: '#8FA0D8',
+      main: '#A5B3DF',
+      light: '#A5B3DF',
       contrastText: '#0B0829',
     },
     background: {
-      default: '#F9DFC6',
-      paper: '#FFF8F0',
+      default: '#FFF8F0',
+      paper: '#FFFFFF',
     },
     text: {
       primary: '#0B0829',
       secondary: '#49445F',
     },
+    action: {
+      active: '#0B0829',
+    },
     divider: 'rgba(11, 8, 41, 0.16)',
     success: {
-      main: '#8FA0D8',
+      main: '#A5B3DF',
       contrastText: '#0B0829',
     },
     warning: {
@@ -79,14 +83,23 @@ const appTheme = createTheme({
             boxShadow: '0 12px 24px rgba(11, 8, 41, 0.18)',
           },
         },
+        outlinedPrimary: {
+          backgroundColor: '#FFF8F0',
+          borderColor: '#FF8400',
+          '&:hover': {
+            backgroundColor: '#FFE8CF',
+            borderColor: '#D66E00',
+          },
+        },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          borderColor: 'rgba(11, 8, 41, 0.15)',
+          borderColor: '#A5B3DF',
         },
+        outlined: { borderColor: '#A5B3DF' },
       },
     },
     MuiTab: {
@@ -107,7 +120,7 @@ const appTheme = createTheme({
     MuiCheckbox: {
       styleOverrides: {
         root: {
-          color: '#8FA0D8',
+          color: '#A5B3DF',
           '&.Mui-checked': {
             color: '#FF8400',
           },

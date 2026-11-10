@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Box, Button, Checkbox, Divider, FormControlLabel, InputAdornment, IconButton, Link, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Checkbox, FormControlLabel, InputAdornment, IconButton, Link, Paper, Stack, TextField, Typography } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import Brand from '../components/common/Brand';
@@ -9,20 +9,24 @@ export default function AuthPage({
   onLogin
 }) {
   const {
-    login,
-    data
+    login
   } = useMarketplace();
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
-  const enter = (role) => {
-    const enteredRole = login(role, remember);
-    if (!enteredRole) return;
-    if (enteredRole === 'seller' && data.profile.companyRegistrationPending) { navigate('/registro-empresa'); return; }
-    if (onLogin) onLogin();else navigate('/inicio');
-  };
-  const submit = event => {
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const submit = async event => {
     event.preventDefault();
-    enter();
+    if (submitting) return;
+    const values = new FormData(event.currentTarget);
+    setError('');
+    setSubmitting(true);
+    try {
+      const enteredRole = await login({ identifier: String(values.get('identifier')).trim(), password: String(values.get('password')), remember });
+      if (!enteredRole) { setError('El correo/RUN o la contraseña no son correctos.'); return; }
+      if (onLogin) onLogin(); else navigate('/inicio');
+    } catch { setError('No fue posible iniciar sesión. Inténtalo nuevamente.'); }
+    finally { setSubmitting(false); }
   };
   return <Box sx={{
     minHeight: '100dvh',
@@ -99,9 +103,7 @@ export default function AuthPage({
             fontSize: 14,
             mb: 3
           }}>Accede a tu cuenta y continúa descubriendo Multiplaza.</Typography>
-          <Alert severity="info" sx={{
-            mb: 3
-          }}>Acceso de demostración. Usa los botones de ejemplo para recorrer las vistas.</Alert>
+          {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
           <Box component="form" onSubmit={submit}><Stack spacing={2.5}>
             <TextField name="identifier" label="Correo electrónico o RUN" placeholder="nombre@gmail.com o 12.345.678-9" required fullWidth autoComplete="username" />
             <TextField name="password" label="Contraseña" type={showPassword ? 'text' : 'password'} required fullWidth autoComplete="current-password" slotProps={{
@@ -110,7 +112,7 @@ export default function AuthPage({
                 }
               }} />
             <FormControlLabel label="Mantener sesión activa" control={<Checkbox checked={remember} onChange={event => setRemember(event.target.checked)} />} />
-            <Button variant="contained" type="submit" size="large">Iniciar sesión</Button>
+            <Button variant="contained" type="submit" size="large" disabled={submitting}>{submitting ? 'Ingresando…' : 'Iniciar sesión'}</Button>
           </Stack></Box>
           <Typography align="center" sx={{
             mt: 3,
@@ -119,14 +121,6 @@ export default function AuthPage({
               fontWeight: 800
             }}>Crear cuenta</Link></Typography>
           <Button fullWidth sx={{ mt: 1 }} onClick={() => navigate('/registro/vendedor')}>Crear cuenta de vendedor</Button>
-          <Divider sx={{
-            my: 3
-          }}>Cuentas de ejemplo</Divider><Stack direction={{
-            xs: 'column',
-            sm: 'row'
-          }} sx={{
-            gap: 1
-          }}><Button variant="outlined" fullWidth onClick={() => enter('client')}>Entrar como cliente</Button><Button variant="outlined" fullWidth onClick={() => enter('seller')}>Entrar como vendedor</Button></Stack>
         </Paper>
       </Box>
     </Box>

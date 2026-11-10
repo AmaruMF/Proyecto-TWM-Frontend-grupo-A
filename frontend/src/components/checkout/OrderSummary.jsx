@@ -1,10 +1,12 @@
 import { Divider, Stack, Typography } from '@mui/material';
 import { currency, orderTotals } from '../../utils/commerce';
 export default function OrderSummary({
-  items,
-  shipping
+  items = [],
+  shipping = 0,
+  totals: snapshot,
+  totalLabel = 'Total a pagar'
 }) {
-  const totals = orderTotals(items, shipping);
+  const totals = snapshot || orderTotals(items, shipping);
   return <Stack spacing={1}>
     {[['Valor sin IVA (Neto)', totals.net], ['IVA (19%)', totals.tax], ['Costo de envío', totals.shipping]].map(([label, value]) => <Stack key={label} direction="row" sx={{
       justifyContent: "space-between",
@@ -20,7 +22,7 @@ export default function OrderSummary({
       justifyContent: "space-between"
     }}><Typography sx={{
         fontWeight: 900
-      }}>Total a pagar</Typography><Typography sx={{
+      }}>{totalLabel}</Typography><Typography sx={{
         fontWeight: 900
       }}>{currency(totals.total)}</Typography></Stack>
   </Stack>;

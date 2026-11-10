@@ -7,7 +7,7 @@ import { isOwnMessage, isSystemMessage, messageRole, participantName, recipientN
 import { dateTimeLabel } from '../../utils/commerce';
 
 export default function ChatDialog({ id, onClose }) {
-  const { data, setData, session } = useMarketplace();
+  const { data, sendMessage, session } = useMarketplace();
   const [message, setMessage] = useState('');
   const thread = data.messages.find(item => item.id === id);
   const role = session?.role || 'client';
@@ -21,25 +21,7 @@ export default function ChatDialog({ id, onClose }) {
   const send = event => {
     event.preventDefault();
     if (!thread || !message.trim()) return;
-    const entry = {
-      id: crypto.randomUUID(),
-      senderRole: role,
-      senderName: participantName(thread, role),
-      incoming: role === 'seller',
-      sentAt: new Date().toISOString(),
-      text: message.trim(),
-      time: new Intl.DateTimeFormat('es-CL', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(new Date())
-    };
-    setData(current => ({
-      ...current,
-      messages: current.messages.map(item => item.id === thread.id ? {
-        ...item,
-        messages: [...item.messages, entry]
-      } : item)
-    }));
+    if (!sendMessage(thread.id, message)) return;
     setMessage('');
   };
   return <Dialog open={Boolean(thread)} onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="chat-title">
@@ -75,12 +57,12 @@ export default function ChatDialog({ id, onClose }) {
           overflowY: 'auto'
         }}>{thread.messages.map(item => <Box key={item.id} sx={{
             p: 2,
-            bgcolor: isOwnMessage(item, role) ? 'background.paper' : 'primary.light',
+            bgcolor: isOwnMessage(item, role, session?.accountId) ? 'background.paper' : 'primary.light',
             borderRadius: 2,
             maxWidth: '85%',
-            alignSelf: !messageRole(item) ? 'center' : isOwnMessage(item, role) ? 'flex-end' : 'flex-start',
+            alignSelf: !messageRole(item) ? 'center' : isOwnMessage(item, role, session?.accountId) ? 'flex-end' : 'flex-start',
             minWidth: 120
-          }}><Typography sx={{ fontWeight: 800, fontSize: 12, mb: 0.5 }}>{!messageRole(item) ? 'Mensaje anterior · remitente no registrado' : `${isSystemMessage(item) ? 'Saludo inicial · ' : isOwnMessage(item, role) ? 'Tú · ' : ''}${roleLabel(messageRole(item))} · ${item.senderName || participantName(thread, messageRole(item))}`}</Typography><Typography sx={{
+          }}><Typography sx={{ fontWeight: 800, fontSize: 12, mb: 0.5 }}>{!messageRole(item) ? 'Mensaje anterior · remitente no registrado' : `${isSystemMessage(item) ? 'Saludo inicial · ' : isOwnMessage(item, role, session?.accountId) ? 'Tú · ' : ''}${roleLabel(messageRole(item))} · ${item.senderName || participantName(thread, messageRole(item))}`}</Typography><Typography sx={{
               whiteSpace: 'pre-wrap',
               overflowWrap: 'anywhere',
               fontSize: 14
@@ -96,7 +78,7 @@ export default function ChatDialog({ id, onClose }) {
           gap: 1
         }}><TextField label="Escribe tu mensaje aquí" value={message} onChange={event => setMessage(event.target.value)} fullWidth slotProps={{
             htmlInput: {
-              maxLength: 2000
+              maxLength: 500
             }
           }} /><IconButton aria-label="Enviar mensaje" type="submit" disabled={!message.trim()} sx={{
             bgcolor: 'primary.main',

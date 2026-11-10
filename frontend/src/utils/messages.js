@@ -3,11 +3,11 @@ export const messageRole = (message) => message.senderRole || (message.incoming 
 export const roleLabel = (role) => role === 'seller' ? 'Vendedor' : 'Cliente';
 export const participantName = (thread, role) => role === 'seller' ? thread.seller : thread.customer || 'Cliente';
 export const recipientName = (thread, role) => participantName(thread, role === 'seller' ? 'client' : 'seller');
-export const isOwnMessage = (message, role) => messageRole(message) === role;
+export const isOwnMessage = (message, role, accountId) => messageRole(message) === role && (!accountId || message.senderId === accountId);
 export const isSystemMessage = (message) => Boolean(message.system || (!message.senderRole && message.incoming));
 
-export function sentMessages(threads, role) {
-  return threads.flatMap(thread => thread.messages.filter(message => isOwnMessage(message, role) && !isSystemMessage(message)).map(message => ({ ...message, thread })))
+export function sentMessages(threads, role, accountId) {
+  return threads.flatMap(thread => thread.messages.filter(message => isOwnMessage(message, role, accountId) && !isSystemMessage(message)).map(message => ({ ...message, thread })))
     .sort((a, b) => (b.sentAt || '').localeCompare(a.sentAt || ''));
 }
 

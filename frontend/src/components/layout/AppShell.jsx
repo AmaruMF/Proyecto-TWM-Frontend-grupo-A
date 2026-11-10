@@ -196,7 +196,7 @@ export default function AppShell({
               sm: 'block'
             }
           }}>
-            <TextField label="Buscar productos y servicios" value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar productos, servicios y más..." fullWidth slotProps={{
+            <TextField value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar productos, servicios y más..." fullWidth slotProps={{
               htmlInput: {
                 'aria-label': 'Buscar productos y servicios'
               },
@@ -212,7 +212,7 @@ export default function AppShell({
             xs: 'block',
             sm: 'none'
           }
-        }}><TextField label="Buscar productos y servicios" value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar en Multiplaza" fullWidth slotProps={{
+        }}><TextField value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar en Multiplaza" fullWidth slotProps={{
             htmlInput: {
               'aria-label': 'Buscar productos y servicios'
             },

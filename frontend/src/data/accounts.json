@@ -1,0 +1,32 @@
+[
+  {
+    "id": "account-cjesus",
+    "name": "Cristián Jesús",
+    "lastName": "Cuevas",
+    "run": "12.345.678-5",
+    "birthday": "1995-05-15",
+    "email": "cjesus@gmail.com",
+    "phones": [
+      "+56 9 1234 5678"
+    ],
+    "sellerEnabled": true,
+    "passwordSalt": "$2b$12$HTuQ.65JQJumt1nMooWKXe",
+    "passwordHash": "$2b$12$HTuQ.65JQJumt1nMooWKXeLhc76lSyvLXcmrC93tiC9Fct8dnTRzS",
+    "passwordAlgorithm": "bcrypt"
+  },
+  {
+    "id": "account-milla",
+    "name": "Millaray",
+    "lastName": "Godoy",
+    "run": "11.111.111-1",
+    "birthday": "2001-08-12",
+    "email": "milla@gmail.com",
+    "phones": [
+      "+56 9 8765 4321"
+    ],
+    "sellerEnabled": false,
+    "passwordSalt": "$2b$12$t8aDF.5ff/6aOEIMqw4sf.",
+    "passwordHash": "$2b$12$t8aDF.5ff/6aOEIMqw4sf.bTTSVM9sgT/WP5zguG409WitTwX9msK",
+    "passwordAlgorithm": "bcrypt"
+  }
+]

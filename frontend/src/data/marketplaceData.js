@@ -1,4 +1,4 @@
-import { products, services } from './catalog';
+import { products, services } from './catalog.js';
 
 export const initialMarketplace = {
   version: 1,

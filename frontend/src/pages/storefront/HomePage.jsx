@@ -135,16 +135,16 @@ export default function HomePage() {
               flexWrap: "wrap"
             }}><Typography sx={{
                 fontWeight: 900
-              }}>{currency(product.price)}</Typography><Typography sx={{
+          }}>{currency(product.price)}</Typography>{product.originalPrice > product.price && <Typography sx={{
                 textDecoration: 'line-through',
                 fontSize: 13
-              }}>{currency(product.originalPrice)}</Typography></Stack></Box><Chip label={`${product.discount}% OFF`} size="small" sx={{
+              }}>{currency(product.originalPrice)}</Typography>}</Stack></Box>{product.discount > 0 && <Chip label={`${product.discount}% OFF`} size="small" sx={{
             bgcolor: 'primary.main', color: 'primary.contrastText',
             display: {
               xs: 'none',
               sm: 'inline-flex'
             }
-          }} /></ButtonBase>;
+          }} />}</ButtonBase>;
       })}</Stack>
   </>;
   return <>
@@ -178,7 +178,7 @@ export default function HomePage() {
         },
         gap: 2,
         my: 3
-      }}>{[['Ventas registradas', currency(data.orders.reduce((total, item) => total + item.total, 0)), 'Historial de ventas'], ['Publicaciones activas', data.products.filter(item => !item.hidden).length, `${data.products.filter(item => item.stock < 3).length} con stock bajo`], ['Cotizaciones pendientes', data.quotes.filter(item => item.step === 0).length, 'Por responder'], ['Conversaciones', data.messages.length, 'Atención al cliente']].map(([label, value, helper]) => <Box key={label} sx={{
+      }}>{[['Ventas registradas', currency(data.sales.reduce((total, item) => total + item.total, 0)), 'Historial de ventas'], ['Publicaciones activas', data.ownedProducts.filter(item => !item.hidden).length + data.ownedServices.filter(item => !item.hidden).length, `${data.ownedProducts.filter(item => item.stock < 3).length} con stock bajo`], ['Cotizaciones pendientes', data.receivedQuotes.filter(item => item.step === 0).length, 'Por responder'], ['Conversaciones', data.messages.length, 'Atención al cliente']].map(([label, value, helper]) => <Box key={label} sx={{
           bgcolor: 'rgba(255,248,240,0.35)',
           p: 2,
           borderRadius: 1

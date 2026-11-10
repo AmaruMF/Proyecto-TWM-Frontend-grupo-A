@@ -4,6 +4,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import useMarketplace from '../../hooks/useMarketplace';
 import { navigate } from '../../hooks/useNavigation';
 import { currency } from '../../utils/commerce';
+import { isFavorite } from '../../context/catalogActions';
 export default function ProductCard({
   product,
   service = false,
@@ -15,13 +16,13 @@ export default function ProductCard({
     session,
     toggleFavorite
   } = useMarketplace();
-  const favorite = data.wishlists.find(list => list.id === listId)?.productIds.includes(product.id);
+  const favorite = isFavorite(data.wishlists.find(list => list.id === listId), product.id, service ? 'service' : 'product');
   const open = () => navigate(`/${service ? 'servicio' : 'producto'}/${product.id}`);
   return <Box component="article" sx={{
     p: 1.25,
     bgcolor: 'background.paper',
     border: '1px solid',
-    borderColor: 'divider',
+    borderColor: 'secondary.main',
     borderRadius: 1.5,
     display: 'flex',
     flexDirection: 'column',
@@ -81,7 +82,7 @@ export default function ProductCard({
       mt: 'auto',
       mb: 1
     }}>{service ? product.seller : product.brand}</Typography>
-    {service ? <Stack direction="row" spacing={1}><Button onClick={open} variant="outlined" size="small" fullWidth>Ver</Button><Button onClick={() => onQuote(product)} variant="contained" color="primary" size="small" fullWidth>Cotizar</Button></Stack> : <>
+    {service ? <Stack direction="row" spacing={1}><Button onClick={open} variant="outlined" size="small" fullWidth>Ver</Button><Button onClick={() => onQuote ? onQuote(product) : open()} variant="contained" color="primary" size="small" fullWidth>Cotizar</Button></Stack> : <>
       <Typography sx={{
         fontSize: 12,
         textDecoration: 'line-through'
@@ -111,7 +112,8 @@ export default function ProductCard({
           }
         }} />}
       </Stack>
-      <Tooltip title={favorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}><IconButton size="small" aria-label={`${favorite ? 'Quitar' : 'Guardar'} ${product.name} en favoritos`} onClick={() => session ? toggleFavorite(product.id, listId) : navigate('/acceso')} sx={{
+    </>}
+      <Tooltip title={favorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}><IconButton size="small" aria-label={`${favorite ? 'Quitar' : 'Guardar'} ${product.name} en favoritos`} onClick={() => session ? toggleFavorite(product.id, listId, service ? 'service' : 'product') : navigate('/acceso')} sx={{
           position: 'absolute',
           top: 42,
           right: 15,
@@ -120,6 +122,5 @@ export default function ProductCard({
             bgcolor: 'secondary.light'
           }
         }}>{favorite ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}</IconButton></Tooltip>
-    </>}
   </Box>;
 }

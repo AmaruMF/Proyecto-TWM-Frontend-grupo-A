@@ -1,6 +1,6 @@
 const image = (name) => `/assets/figma/${name}`;
 
-export const products = [
+const productCatalog = [
   { id: 'hp-victus', name: 'Notebook HP Gamer Victus 15-fa2009la', brand: 'HP', seller: 'HP Store', category: 'Tecnología - Computación', price: 677990, originalPrice: 1199990, discount: 43, image: image('da0c3.png'), detailImage: image('28074.png'), sku: '0341', stock: 5, size: '15.6 pulgadas (35.7 × 25.5 × 2.35 cm)', weight: '2.29 kg', color: 'Negro', material: 'Policarbonato' },
   { id: 'gopro', name: 'GoPro HERO11 Black', brand: 'GOPRO', seller: 'GoPro Store', category: 'Vídeo y Fotografía', price: 479990, originalPrice: 549990, discount: 13, image: image('53439.png'), stock: 8 },
   { id: 'dyson', name: 'Dyson V15 Detect Vacuum Cleaner', brand: 'DYSON', seller: 'Dyson', category: 'Electrodomésticos', price: 799990, originalPrice: 899990, discount: 11, image: image('3b162.png'), stock: 6 },
@@ -17,7 +17,7 @@ export const products = [
   { id: 'keyboard', name: 'Teclado Mecánico RGB', brand: 'RGB', seller: 'HP Store', category: 'Tecnología', price: 49990, originalPrice: 49990, discount: 0, image: image('8048d.png'), sku: '0199', stock: 0 },
 ];
 
-export const services = [
+const serviceCatalog = [
   { id: 'jardineria', name: 'Trabajo de jardinería profesional', seller: 'Miguel Núñez', category: 'Jardinería', image: image('86e66.png'), duration: '2 horas', description: 'Mantención de jardines, poda y cuidado de áreas verdes.' },
   { id: 'reparacion', name: 'Limpieza de combustión y reparaciones', seller: 'Reparaciones Osorno', category: 'Reparaciones', image: image('65ae4.png'), duration: '1 hora', description: 'Revisión y mantención de equipos de calefacción.' },
   { id: 'cuidados', name: 'Cuidado de adultos a tiempo completo', seller: 'María González', category: 'Cuidado de adultos', image: image('aef8e.png'), duration: '8 horas', description: 'Acompañamiento y asistencia en las actividades diarias.' },
@@ -27,3 +27,44 @@ export const services = [
   { id: 'clases', name: 'Clases particulares de matemáticas', seller: 'Cristina Sanhueza', category: 'Clases Particulares', image: image('9ba5e.png'), duration: '1 hora', description: 'Clases personalizadas y apoyo para preparar tus evaluaciones.' },
   { id: 'terapia', name: 'Sesiones de terapia psicológica para adultos', seller: 'Tamara Candia', category: 'Psicólogos', image: image('690a7.png'), duration: '50 minutos', adultOnly: true, description: 'Solicita información sobre disponibilidad y modalidad de atención.' },
 ];
+
+
+const productDetails = {
+  gopro: ['7.18 × 5.08 × 3.36 cm', '154 g', 'Negro', 'Policarbonato'],
+  dyson: ['126 × 25 × 26.6 cm', '3 kg', 'Amarillo', 'Plástico y metal'],
+  fitbit: ['Talla estándar', '29 g', 'Negro', 'Aluminio y silicona'],
+  'air-jordan': ['Talla 42', '900 g', 'Rojo y negro', 'Cuero'],
+  iphone: ['6.9 pulgadas', '231 g', 'Titanio', 'Aluminio y vidrio'],
+  nespresso: ['12 × 23 × 32 cm', '2.4 kg', 'Negro', 'Plástico'],
+  jbl: ['9.4 × 7.8 × 4.2 cm', '190 g', 'Blanco', 'Plástico'],
+  samsung: ['14.6 pulgadas', '732 g', 'Gris', 'Aluminio'],
+  kindle: ['6.8 pulgadas', '207 g', 'Negro', 'Plástico'],
+  sony: ['Talla ajustable', '250 g', 'Negro', 'Plástico y cuero sintético'],
+  macbook: ['15 pulgadas', '1.51 kg', 'Gris', 'Aluminio'],
+  mouse: ['12 × 6 × 4 cm', '85 g', 'Negro', 'Plástico'],
+  keyboard: ['44 × 13 × 3 cm', '800 g', 'Negro', 'Plástico y aluminio'],
+};
+
+export const products = productCatalog.map((product, index) => {
+  const [size, weight, color, material] = productDetails[product.id] || [];
+  const sku = product.sku || `PRD-${String(index + 1).padStart(4, '0')}`;
+  const item = { ...product, size: product.size || size, weight: product.weight || weight, color: product.color || color, material: product.material || material, sku, adultOnly: false };
+  const variants = product.id === 'mouse' ? [
+    { id: 'mouse-negro', sku: `${sku}-NEG`, attributes: { color: 'Negro', model: 'RGB clásico' }, stock: 1, price: product.price },
+    { id: 'mouse-blanco', sku: `${sku}-BLA`, attributes: { color: 'Blanco', model: 'RGB ergonómico' }, stock: 1, price: product.price + 5000 },
+  ] : [{ id: product.id, sku, attributes: { size: item.size, color: item.color, material: item.material }, stock: product.stock, price: product.price }];
+  return { ...item, variants, stock: variants.reduce((sum, variant) => sum + variant.stock, 0) };
+});
+
+const serviceMinutes = [120, 60, 480, 60, 60, 60, 60, 50];
+const servicePrices = [65000, 35000, 45000, 120000, 40000, 80000, 20000, 35000];
+export const services = serviceCatalog.map((service, index) => ({
+  ...service,
+  sku: `SRV-${String(index + 1).padStart(4, '0')}`,
+  durationMinutes: serviceMinutes[index],
+  duration: `${serviceMinutes[index]} minutos`,
+  price: servicePrices[index],
+  originalPrice: servicePrices[index],
+  discount: 0,
+  adultOnly: Boolean(service.adultOnly),
+}));

@@ -3,6 +3,7 @@ import { Alert, Box, Button, Divider, FormControlLabel, Checkbox, Stack, TextFie
 import SectionHeader from '../../components/common/SectionHeader';
 import PagePanel from '../../components/common/PagePanel';
 import AddressFields from '../../components/forms/AddressFields';
+import PhoneFields from '../../components/forms/PhoneFields';
 import useMarketplace from '../../hooks/useMarketplace';
 import { navigate } from '../../hooks/useNavigation';
 import { isAdult, validRut } from '../../utils/validation';
@@ -20,20 +21,21 @@ export default function RegistrationPage({
 }) {
   const {
     data,
-    setData,
-    login,
+    saveCompany,
     registerProfile,
     notify
   } = useMarketplace();
   const [business, setBusiness] = useState(seller);
-  const [physical, setPhysical] = useState(true);
-  const [offering, setOffering] = useState('Producto');
-  const [phones, setPhones] = useState(['']);
-  const [addresses, setAddresses] = useState([{
+  const [physical, setPhysical] = useState(company ? data.company?.physical ?? true : true);
+  const [offering, setOffering] = useState(company ? data.company?.offering || 'Producto' : 'Producto');
+  const [phones, setPhones] = useState(company && data.company?.phones?.length ? [...data.company.phones] : ['']);
+  const [addresses, setAddresses] = useState(company && data.company?.address ? [{ ...data.company.address, id: data.company.address.id || crypto.randomUUID() }] : [{
+    id: crypto.randomUUID(), label: 'Casa',
     ...emptyAddress
   }]);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState({});
   const [values, setValues] = useState({
     name: '',
@@ -43,10 +45,10 @@ export default function RegistrationPage({
     birthday: '',
     password: '',
     confirm: '',
-    companyName: '',
-    rut: '',
-    companyEmail: '',
-    website: ''
+    companyName: company ? data.company?.name || '' : '',
+    rut: company ? data.company?.rut || '' : '',
+    companyEmail: company ? data.company?.email || '' : '',
+    website: company ? data.company?.website || '' : ''
   });
   const update = field => event => {
     setValues(current => ({
@@ -56,8 +58,9 @@ export default function RegistrationPage({
     setError('');
   };
   const setAddress = (index, address) => setAddresses(current => current.map((item, itemIndex) => itemIndex === index ? address : item));
-  const submit = event => {
+  const submit = async event => {
     event.preventDefault();
+    if (submitting) return;
     setTouched({ run: true, rut: true, birthday: true });
     if (company ? !values.companyName.trim() : !values.name.trim() || !values.lastName.trim()) { setError('Completa el nombre y los apellidos o la razón social con texto válido.'); return; }
     if (!validRut(company ? values.rut : values.run)) {
@@ -76,39 +79,45 @@ export default function RegistrationPage({
       setError('Las contraseñas deben coincidir.');
       return;
     }
+    const normalizedPhones = phones.map(phone => phone.trim());
+    if (!normalizedPhones.length || normalizedPhones.some(phone => !/^\+?\d{8,15}$/.test(phone.replace(/[() .-]/g, ''))) || new Set(normalizedPhones.map(phone => phone.replace(/\D/g, ''))).size !== normalizedPhones.length) { setError('Agrega al menos un teléfono válido y no repitas números.'); return; }
+    if ((!company || physical) && addresses.some(address => ['region', 'commune', 'city', 'street', 'number', ...(!company ? ['label'] : [])].some(field => !String(address[field] || '').trim()))) { setError('Completa todos los campos de las direcciones.'); return; }
+    if (company && values.website.trim()) { try { const website = new URL(values.website); if (!['http:', 'https:'].includes(website.protocol)) throw new Error(); } catch { setError('El sitio web debe comenzar con http:// o https:// y ser válido.'); return; } }
+    setSubmitting(true);
+    try {
     if (company) {
-      setData(current => ({
-        ...current,
-        profile: { ...current.profile, accountType: 'seller', companyRegistrationPending: false },
-        company: {
+      const saved = await saveCompany({
           name: values.companyName.trim(),
           rut: values.rut.trim(),
           email: values.companyEmail.trim(),
           website: values.website,
-          phones,
+          phones: normalizedPhones,
           physical,
           offering,
-          address: physical ? addresses[0] : null
-        }
-      }));
-      login('seller');
+          address: physical ? addresses[0] : null,
+          shippingRates: data.company?.shippingRates || [],
+          defaultShipping: data.company?.defaultShipping ?? 7990
+      });
+      if (!saved) return;
       notify('Empresa registrada. Ya puedes gestionar tus publicaciones.');
       navigate('/inicio');
     } else {
-      if (!registerProfile({
+      if (!await registerProfile({
         name: values.name.trim(),
         lastName: values.lastName.trim(),
         run: values.run,
         email: values.email.trim(),
-        phone: phones[0],
-        phones,
+        phone: normalizedPhones[0],
+        phones: normalizedPhones,
         birthday: values.birthday,
         location: `${addresses[0].city}, Chile`,
         addresses
-      }, business)) return;
-      notify(business ? 'Cuenta de vendedor creada. Completa los datos de tu empresa.' : 'Cuenta de ejemplo creada.');
+      }, business, values.password)) return;
+      notify(business ? 'Cuenta de vendedor creada. Completa los datos de tu empresa.' : 'Cuenta creada.');
       navigate(business ? '/registro-empresa' : '/inicio');
     }
+    } catch { setError('No fue posible guardar el registro. Inténtalo nuevamente.'); }
+    finally { setSubmitting(false); }
   };
   return <Box sx={{
     maxWidth: 1064,
@@ -136,12 +145,10 @@ export default function RegistrationPage({
           gap: 2.5
         }}>
         {company ? <><TextField label="Razón social / Nombre de la empresa" required value={values.companyName} onChange={update('companyName')} /><TextField label="RUT" error={Boolean(touched.rut && !validRut(values.rut))} helperText={touched.rut && !validRut(values.rut) ? "RUT inválido: revisa el dígito verificador." : "Ejemplo: 76.123.456-0"} onBlur={() => setTouched(current => ({ ...current, rut: true }))} placeholder="76.123.456-0" required value={values.rut} onChange={update('rut')} /></> : <><TextField label="Nombres" required value={values.name} onChange={update('name')} autoComplete="given-name" /><TextField label="Apellidos" required value={values.lastName} onChange={update('lastName')} autoComplete="family-name" /><TextField label="RUN" error={Boolean(touched.run && !validRut(values.run))} helperText={touched.run && !validRut(values.run) ? "RUN inválido: revisa el dígito verificador." : "Ejemplo: 12.345.678-5"} onBlur={() => setTouched(current => ({ ...current, run: true }))} placeholder="12.345.678-5" required value={values.run} onChange={update('run')} /></>}
-        <TextField label="Teléfono principal" type="tel" value={phones[0]} onChange={event => setPhones(current => [event.target.value, ...current.slice(1)])} required autoComplete="tel" />
         <TextField label="Correo electrónico" type="email" value={company ? values.companyEmail : values.email} onChange={update(company ? 'companyEmail' : 'email')} required autoComplete="email" />
-        {phones.slice(1).map((phone, index) => <TextField key={index} label={`Teléfono adicional ${index + 1}`} value={phone} type="tel" onChange={event => setPhones(current => current.map((item, itemIndex) => itemIndex === index + 1 ? event.target.value : item))} />)}
-        {company && <TextField label="Sitio web (opcional)" placeholder="https://www.empresa.cl" value={values.website} onChange={update('website')} />}
+        {company && <TextField label="Sitio web (opcional)" type="url" placeholder="https://www.empresa.cl" value={values.website} onChange={update('website')} />}
       </Box>
-      <Box><Button variant="outlined" onClick={() => setPhones(current => [...current, ''])}>＋ Agregar otro teléfono</Button></Box>
+      <PhoneFields value={phones} onChange={setPhones} prefix={company ? 'company-registration-' : 'registration-'} />
       {!company && <TextField label="Fecha de nacimiento" error={Boolean(business && touched.birthday && !isAdult(values.birthday, today()))} helperText={business ? "Para vender debes tener 18 años cumplidos." : undefined} onBlur={() => setTouched(current => ({ ...current, birthday: true }))} type="date" required value={values.birthday} onChange={update('birthday')} slotProps={{
           inputLabel: {
             shrink: true
@@ -156,12 +163,12 @@ export default function RegistrationPage({
             mt: 1,
             mb: 2
           }}>Selecciona Sí para agregar la ubicación comercial.</Typography><ToggleButtonGroup value={physical} exclusive onChange={(_, next) => next !== null && setPhysical(next)} size="small" aria-label="Tienda física"><ToggleButton value={true}>Sí</ToggleButton><ToggleButton value={false}>No</ToggleButton></ToggleButtonGroup></Box>}
-      {(!company || physical) && <><Typography component="h2" variant="h3">{company ? 'Ubicación de la tienda' : 'Dirección de envío'}</Typography>{addresses.map((address, index) => <Box key={index}>{index > 0 && <Divider sx={{
+      {(!company || physical) && <><Typography component="h2" variant="h3">{company ? 'Ubicación de la tienda' : 'Dirección de envío'}</Typography>{addresses.map((address, index) => <Box key={address.id}>{index > 0 && <Divider sx={{
               mb: 3
-            }} />}<AddressFields value={address} onChange={next => setAddress(index, next)} prefix={`address-${index}-`} />{index > 0 && <Button onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))} sx={{
+            }} />}<AddressFields value={address} onChange={next => setAddress(index, next)} prefix={`address-${index}-`} showLabel={!company} />{index > 0 && <Button onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))} sx={{
               mt: 1
             }}>Quitar dirección</Button>}</Box>)}{!company && <Box><Button variant="outlined" onClick={() => setAddresses(current => [...current, {
-              ...emptyAddress
+              ...emptyAddress, id: crypto.randomUUID(), label: ''
             }])}>＋ Agregar otra dirección</Button></Box>}</>}
       {company ? <Box><Typography component="h2" variant="h3" sx={{
             mb: 2
@@ -178,7 +185,7 @@ export default function RegistrationPage({
       {error && <Alert severity="error" role="alert">{error}</Alert>}
       <Stack direction="row" sx={{
           justifyContent: "space-between"
-        }}><Button variant="outlined" onClick={() => navigate(company ? '/cuenta' : '/acceso')}>Volver</Button><Button type="submit" variant="contained" sx={{
+        }}><Button variant="outlined" onClick={() => navigate(company ? '/cuenta' : '/acceso')}>Volver</Button><Button type="submit" variant="contained" disabled={submitting} sx={{
             minWidth: {
               sm: 240
             }

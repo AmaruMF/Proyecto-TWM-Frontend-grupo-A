@@ -12,10 +12,10 @@ export default function PublicationsPage({
     setData,
     notify
   } = useMarketplace();
-  const publications = servicesOnly ? data.services.map(item => ({
+  const publications = servicesOnly ? (data.ownedServices || []).map(item => ({
     ...item,
     isService: true
-  })) : [...data.products, ...data.services.map(item => ({
+  })) : [...(data.ownedProducts || []), ...(data.ownedServices || []).map(item => ({
     ...item,
     isService: true
   }))];
