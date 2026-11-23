@@ -1,0 +1,67 @@
+@base = http://localhost:5079
+@run = ADMINLOCAL
+@clave = PEGAR_CLAVE_INICIAL_DEL_ARCHIVO_DE_ACCESO
+@token = PEGAR_ACCESS_TOKEN_DEL_LOGIN
+@sku = PROD-00001
+@vendedor = PEGAR_RUN_DE_PRECIOS_DEL_PRODUCTO
+@pedido = 1
+
+### Salud
+GET {{base}}/api/salud
+
+### Login: copiar accessToken a la variable token
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "run": "{{run}}", "clave": "{{clave}}" }
+
+### Perfil autenticado
+GET {{base}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Catálogo paginado: la lista está en datos
+GET {{base}}/api/productos?pagina=1&tamano=20
+
+### Categorías
+GET {{base}}/api/categorias
+
+### Detalle: escoger vendedorRun desde precios
+GET {{base}}/api/productos/{{sku}}
+
+### Agregar/reemplazar una línea del carrito propio
+PUT {{base}}/api/carrito/items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "sku": "{{sku}}", "vendedorRun": "{{vendedor}}", "cantidad": 1 }
+
+### Carrito e importes
+GET {{base}}/api/carrito
+Authorization: Bearer {{token}}
+
+### Confirmar: usar un UUID nuevo por compra y reutilizarlo al reintentar
+POST {{base}}/api/pedidos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "claveIdempotencia": "73184f23-9ea8-4f35-b842-5e99a278a3d0", "direccionEntrega": "Calle de ejemplo 123, Santiago" }
+
+### Historial propio
+GET {{base}}/api/pedidos?pagina=1&tamano=20
+Authorization: Bearer {{token}}
+
+### Cancelación de un pedido pendiente
+POST {{base}}/api/pedidos/{{pedido}}/cancelar
+Authorization: Bearer {{token}}
+
+### Administración de usuarios
+GET {{base}}/api/usuarios?pagina=1&tamano=20
+Authorization: Bearer {{token}}
+
+### Referencias necesarias para crear un producto
+GET {{base}}/api/referencias/cotizaciones?pagina=1&tamano=20
+Authorization: Bearer {{token}}
+
+### Cerrar todas las sesiones del usuario
+POST {{base}}/api/auth/logout
+Authorization: Bearer {{token}}

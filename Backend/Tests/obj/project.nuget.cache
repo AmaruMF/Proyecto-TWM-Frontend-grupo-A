@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "dgSpecHash": "XeN6P14nPCU=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Crist\\TiendaMultiplaza.API\\Tests\\Backend.Integration.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.30\\microsoft.aspnetcore.authentication.jwtbearer.8.0.30.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.0\\microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.identitymodel.abstractions\\7.7.3\\microsoft.identitymodel.abstractions.7.7.3.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.identitymodel.jsonwebtokens\\7.7.3\\microsoft.identitymodel.jsonwebtokens.7.7.3.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.identitymodel.logging\\7.7.3\\microsoft.identitymodel.logging.7.7.3.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.identitymodel.protocols\\7.7.3\\microsoft.identitymodel.protocols.7.7.3.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.identitymodel.protocols.openidconnect\\7.7.3\\microsoft.identitymodel.protocols.openidconnect.7.7.3.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\microsoft.identitymodel.tokens\\7.7.3\\microsoft.identitymodel.tokens.7.7.3.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\npgsql\\8.0.6\\npgsql.8.0.6.nupkg.sha512",
+    "C:\\Users\\Crist\\.nuget\\packages\\system.identitymodel.tokens.jwt\\7.7.3\\system.identitymodel.tokens.jwt.7.7.3.nupkg.sha512"
+  ],
+  "logs": []
+}
