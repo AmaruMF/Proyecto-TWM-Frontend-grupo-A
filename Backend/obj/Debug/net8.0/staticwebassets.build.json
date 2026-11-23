@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "L0GYeVebDDOHCMai4H3HlRykzYR86nCMgroh1x4IlTc=",
+  "Source": "TiendaMultiplaza.API",
+  "BasePath": "_content/TiendaMultiplaza.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
