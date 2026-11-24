@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\TiendaMultiplaza.API.props" />
-</Project>
